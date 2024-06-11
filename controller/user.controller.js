@@ -30,7 +30,6 @@ exports.createUser = async (req, res) => {
     // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    console.log('Hashed Password:', hashedPassword); // Log the hashed password
 
     // Create a new user instance
     user = new userModel({
@@ -50,7 +49,7 @@ exports.createUser = async (req, res) => {
     };
 
     // Sign the JWT token
-    jwt.sign(payload, "SECRET", { expiresIn: "1d" }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" }, (err, token) => {
       if (err) throw err;
 
       // Set the token in a cookie
@@ -83,14 +82,12 @@ exports.loginUser = async (req, res) => {
     // Check if the user exists
     let user = await userModel.findOne({ email });
     if (!user) {
-      console.log("User not found");
       return res.status(400).json({ message: "Invalid Credentials" });
     }
 
     // Compare the password
     const isMatch = bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log("Password does not match");
       return res.status(400).json({ message: "Invalid Credentials" });
     }
 
@@ -102,7 +99,7 @@ exports.loginUser = async (req, res) => {
     };
 
     // Sign the JWT token
-    jwt.sign(payload, "SECRET", { expiresIn: "1d" }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" }, (err, token) => {
       if (err) throw err;
 
       // Set the token in a cookie
@@ -113,7 +110,6 @@ exports.loginUser = async (req, res) => {
         maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
       });
 
-      console.log("User logged in successfully");
 
       return res.status(200).json({
         message: "Logged in successfully!",
@@ -125,7 +121,6 @@ exports.loginUser = async (req, res) => {
       });
     });
   } catch (error) {
-    console.error("Server error:", error.message);
     res.status(500).send("Server error");
   }
 };
