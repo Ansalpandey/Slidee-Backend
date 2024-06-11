@@ -8,7 +8,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 //Middlewares
 app.use(express.json({ limit: "20kb" }));
-app.use(express.urlencoded());
 app.use(express.static("public"));
 app.use(cookieParser());
 

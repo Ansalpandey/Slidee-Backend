@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 const userController = require("../controller/user.controller");
 const auth = require("../middleware/auth.middleware");
+router.use(auth);
 
-router.get("/", auth, (req, res) => {
+router.get("/", (req, res) => {
   userController.getUsers(req, res);
 });
 

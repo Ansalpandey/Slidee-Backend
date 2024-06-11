@@ -27,16 +27,17 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // Hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    console.log('Hashed Password:', hashedPassword); // Log the hashed password
+
     // Create a new user instance
     user = new userModel({
       name,
       email,
-      password,
+      password: hashedPassword,
     });
-
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
 
     // Save the user to the database
     const result = await user.save();
@@ -49,7 +50,7 @@ exports.createUser = async (req, res) => {
     };
 
     // Sign the JWT token
-    jwt.sign(payload, "your_jwt_secret", { expiresIn: "1h" }, (err, token) => {
+    jwt.sign(payload, "SECRET", { expiresIn: "1d" }, (err, token) => {
       if (err) throw err;
 
       // Set the token in a cookie
@@ -57,7 +58,7 @@ exports.createUser = async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production", // Use secure cookies in production
         sameSite: "strict", // Adjust according to your needs
-        maxAge: '1d', // 1 day
+        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
       });
 
       return res.status(201).json({
@@ -76,55 +77,58 @@ exports.createUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-    const { email, password } = req.body;
-  
-    try {
-      // Check if the user exists
-      let user = await userModel.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid Credentials' });
-      }
-  
-      // Compare the password
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Invalid Credentials' });
-      }
-  
-      // Create a JWT payload
-      const payload = {
-        user: {
-          id: user.id
-        }
-      };
-  
-      // Sign the JWT token
-      jwt.sign(payload, 'your_jwt_secret', { expiresIn: '1h' }, (err, token) => {
-        if (err) throw err;
-  
-        // Set the token in a cookie
-        res.cookie('token', token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-          sameSite: 'strict', // Adjust according to your needs
-          maxAge: 3600000 // 1 hour
-        });
-  
-        return res.status(200).json({
-          message: 'Logged in successfully!',
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email
-          }
-        });
-      });
-  
-    } catch (error) {
-      console.error(error.message);
-      res.status(500).send('Server error');
+  const { email, password } = req.body;
+
+  try {
+    // Check if the user exists
+    let user = await userModel.findOne({ email });
+    if (!user) {
+      console.log("User not found");
+      return res.status(400).json({ message: "Invalid Credentials" });
     }
-  };
+
+    // Compare the password
+    const isMatch = bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      console.log("Password does not match");
+      return res.status(400).json({ message: "Invalid Credentials" });
+    }
+
+    // Create a JWT payload
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
+
+    // Sign the JWT token
+    jwt.sign(payload, "SECRET", { expiresIn: "1d" }, (err, token) => {
+      if (err) throw err;
+
+      // Set the token in a cookie
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+        sameSite: "strict", // Adjust according to your needs
+        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+      });
+
+      console.log("User logged in successfully");
+
+      return res.status(200).json({
+        message: "Logged in successfully!",
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        },
+      });
+    });
+  } catch (error) {
+    console.error("Server error:", error.message);
+    res.status(500).send("Server error");
+  }
+};
 
 exports.getUserById = (req, res) => {
   userModel.findById(req.params.id).then((result) => {
