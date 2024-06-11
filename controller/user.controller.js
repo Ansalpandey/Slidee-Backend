@@ -13,11 +13,11 @@ exports.getUsers = (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, age, grade, subjects, username } = req.body;
 
   try {
     // Validate input
-    if (!name || !email || !password) {
+    if ((!name || !email || !password, !age, !grade, !subjects || !username)) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -35,6 +35,10 @@ exports.createUser = async (req, res) => {
     user = new userModel({
       name,
       email,
+      age,
+      grade,
+      username,
+      subjects,
       password: hashedPassword,
     });
 
@@ -49,26 +53,31 @@ exports.createUser = async (req, res) => {
     };
 
     // Sign the JWT token
-    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" }, (err, token) => {
-      if (err) throw err;
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+      (err, token) => {
+        if (err) throw err;
 
-      // Set the token in a cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-        sameSite: "strict", // Adjust according to your needs
-        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-      });
+        // Set the token in a cookie
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+          sameSite: "strict", // Adjust according to your needs
+          maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+        });
 
-      return res.status(201).json({
-        message: "User created successfully!",
-        user: {
-          id: result.id,
-          name: result.name,
-          email: result.email,
-        },
-      });
-    });
+        return res.status(201).json({
+          message: "User created successfully!",
+          user: {
+            id: result.id,
+            name: result.name,
+            email: result.email,
+          },
+        });
+      }
+    );
   } catch (error) {
     console.error(error.message);
     res.status(500).send("Server error");
@@ -76,11 +85,11 @@ exports.createUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, username, password } = req.body;
 
   try {
     // Check if the user exists
-    let user = await userModel.findOne({ email });
+    let user = await userModel.findOne().or([{ email }, { username }]);
     if (!user) {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
@@ -99,27 +108,34 @@ exports.loginUser = async (req, res) => {
     };
 
     // Sign the JWT token
-    jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1d" }, (err, token) => {
-      if (err) throw err;
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+      (err, token) => {
+        if (err) throw err;
 
-      // Set the token in a cookie
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-        sameSite: "strict", // Adjust according to your needs
-        maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-      });
+        // Set the token in a cookie
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+          sameSite: "strict", // Adjust according to your needs
+          maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+        });
 
-
-      return res.status(200).json({
-        message: "Logged in successfully!",
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        },
-      });
-    });
+        return res.status(200).json({
+          message: "Logged in successfully!",
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            age: user.age,
+            grade: user.grade,
+            subjects: user.subjects,
+          },
+        });
+      }
+    );
   } catch (error) {
     res.status(500).send("Server error");
   }
@@ -165,6 +181,40 @@ exports.updateUser = (req, res) => {
       message: "Invalid user ID",
     });
   }
+};
+
+exports.forgetPassword = (req, res) => {
+  const { email } = req.body;
+
+  userModel.findOne({ email }).then((user) => {
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    // Create a JWT payload
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
+
+    // Sign the JWT token
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+
+        // Send the email with the reset link
+        const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
+        return res.status(200).json({
+          message: "Reset link sent to your email",
+          resetLink,
+        });
+      }
+    );
+  });
 };
 
 exports.deleteUser = (req, res) => {

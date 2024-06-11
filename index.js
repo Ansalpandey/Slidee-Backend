@@ -17,12 +17,11 @@ connectDB();
 //Routes
 const userRouter = require("./routes/user.route");
 
-
 //Endpoints
 app.use("/api/v1/users/", userRouter);
 
-app.listen(3000, () => {
-  console.log("Server started");
-});
+// app.listen(3000, () => {
+//   console.log("Server started");
+// });
 
 module.exports.handler = serverless(app);
