@@ -22,14 +22,6 @@ const userSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    grade: {
-      type: String,
-      required: true,
-    },
-    subjects: {
-      type: Array,
-      required: true,
-    },
   },
   { timestamps: true }
 );

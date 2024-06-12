@@ -11,7 +11,7 @@ router.post("/register", (req, res) => {
   userController.createUser(req, res);
 });
 
-router.post("/login", auth, (req, res) => {
+router.post("/login", (req, res) => {
   userController.loginUser(req, res);
 });
 
@@ -29,6 +29,10 @@ router.delete("/:id", auth, (req, res) => {
 
 router.post("/reset", (req, res) => {
   userController.forgetPassword(req, res);
+});
+
+router.post("/logout", (req, res) => {
+  userController.logoutUser(req, res);
 });
 
 module.exports = router;
