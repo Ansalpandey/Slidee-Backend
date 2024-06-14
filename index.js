@@ -1,14 +1,12 @@
 const serverless = require("serverless-http");
 const express = require("express");
+const path = require("path");
 const cookieParser = require("cookie-parser");
 const app = express();
-const bodyParser = require("body-parser");
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 //Middlewares
 app.use(express.json({ limit: "20kb" }));
-app.use(express.static("public"));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 //Database connection
