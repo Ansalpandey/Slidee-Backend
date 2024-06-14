@@ -15,7 +15,8 @@
     "mongoose": "^8.4.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "typescript": "^5.4.5"
   },
   "main": "index.js",
   "devDependencies": {
