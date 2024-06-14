@@ -15,10 +15,12 @@ connectDB();
 //Routes
 const userRouter = require("./routes/user.route");
 const courseRouter = require("./routes/course.route");
+const lessonRouter = require("./routes/lesson.route");
 
 //Endpoints
 app.use("/api/v1/users/", userRouter);
 app.use("/api/v1/courses/", courseRouter);
+app.use("/api/v1/lessons/", lessonRouter);
 
 app.listen(3000, () => {
   console.log("Server started");

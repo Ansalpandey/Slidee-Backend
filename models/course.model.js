@@ -23,6 +23,12 @@ const courseSchema = new mongoose.Schema(
       min: [0, "Rating cannot be less than 0"],
       max: [5, "Rating cannot exceed 5"],
     },
+    lessons: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Lesson",
+      },
+    ],
   },
   { timestamps: true }
 );
