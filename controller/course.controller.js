@@ -44,7 +44,6 @@ exports.createCourse = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
-
 exports.updateCourse = async (req, res) => {
   const { name, description, fee, rating } = req.body;
 

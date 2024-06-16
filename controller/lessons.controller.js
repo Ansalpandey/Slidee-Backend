@@ -11,15 +11,29 @@ exports.getLessons = (req, res) => {
 };
 
 exports.createLesson = async (req, res) => {
-  const { title, description, videoUrl, course, isPublished, isFree, duration } = req.body;
+  const {
+    title,
+    description,
+    videoUrl,
+    course,
+    isPublished,
+    isFree,
+    duration,
+  } = req.body;
 
   try {
     // Validate input
-    if ((!title || !description || !videoUrl, !course, !isPublished, !isFree, !duration)) {
+    if (
+      (!title || !description || !videoUrl,
+      !course,
+      !isPublished,
+      !isFree,
+      !duration)
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Create a new lesson instance
+    // Create a new lesson
     const lesson = new lessonModel({
       title,
       description,
@@ -28,6 +42,7 @@ exports.createLesson = async (req, res) => {
       isPublished,
       isFree,
       duration,
+      madeBy: req.user.id,
     });
 
     // Save the lesson to the database
@@ -53,11 +68,25 @@ exports.createLesson = async (req, res) => {
 };
 
 exports.updateLesson = async (req, res) => {
-  const { title, description, videoUrl, course, isPublished, isFree, duration } = req.body;
+  const {
+    title,
+    description,
+    videoUrl,
+    course,
+    isPublished,
+    isFree,
+    duration,
+  } = req.body;
 
   try {
     // Validate input
-    if ((!title || !description || !videoUrl, !course, !isPublished, !isFree, !duration)) {
+    if (
+      (!title || !description || !videoUrl,
+      !course,
+      !isPublished,
+      !isFree,
+      !duration)
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
