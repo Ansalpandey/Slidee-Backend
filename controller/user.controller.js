@@ -1,4 +1,6 @@
 const userModel = require("../models/user.model");
+const courseModel = require("../models/course.model");
+const lessonModel = require("../models/lessons.model");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -197,6 +199,18 @@ exports.deleteUser = (req, res) => {
       user: result,
     });
   });
+};
+
+exports.getUserCourses = (req, res) => {
+  courseModel
+    .find({ user: req.params.id })
+    .populate("courses")
+    .then((result) => {
+      return res.status(200).json({
+        message: "Courses retrieved successfully!",
+        courses: result,
+      });
+    });
 };
 
 exports.logoutUser = (req, res) => {

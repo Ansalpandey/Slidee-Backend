@@ -1,13 +1,17 @@
 const courseModel = require("../models/course.model");
 const mongoose = require("mongoose");
+const lessonModel = require("../models/lessons.model");
 
 exports.getCourses = (req, res) => {
-  courseModel.find().then((result) => {
-    return res.status(200).json({
-      message: "Courses retrieved successfully!",
-      courses: result,
+  courseModel
+    .find()
+    .populate("lessons")
+    .then((result) => {
+      return res.status(200).json({
+        message: "Courses retrieved successfully!",
+        courses: result,
+      });
     });
-  });
 };
 
 exports.createCourse = async (req, res) => {
@@ -44,6 +48,7 @@ exports.createCourse = async (req, res) => {
     return res.status(500).json({ message: error.message });
   }
 };
+
 exports.updateCourse = async (req, res) => {
   const { name, description, fee, rating } = req.body;
 

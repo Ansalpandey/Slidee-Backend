@@ -1,4 +1,6 @@
 const lessonModel = require("../models/lessons.model");
+const courseModel = require("../models/course.model");
+const userModel = require("../models/user.model");
 const mongoose = require("mongoose");
 
 exports.getLessons = (req, res) => {
@@ -19,18 +21,27 @@ exports.createLesson = async (req, res) => {
     isPublished,
     isFree,
     duration,
+    madeBy,
   } = req.body;
 
   try {
     // Validate input
     if (
-      (!title || !description || !videoUrl,
-      !course,
-      !isPublished,
-      !isFree,
-      !duration)
+      !title ||
+      !course ||
+      !madeBy ||
+      typeof isPublished === "undefined" ||
+      typeof isFree === "undefined"
     ) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
+    }
+
+    // Check if the course exists
+    const existingCourse = await courseModel.findById(course);
+    if (!existingCourse) {
+      return res.status(404).json({ message: "Course not found" });
     }
 
     // Create a new lesson
@@ -42,27 +53,27 @@ exports.createLesson = async (req, res) => {
       isPublished,
       isFree,
       duration,
-      madeBy: req.user.id,
+      madeBy,
     });
 
     // Save the lesson to the database
-    const result = await lesson.save();
+    const savedLesson = await lesson.save();
+
+    // Update the course to include the new lesson
+    existingCourse.lessons.push(savedLesson._id);
+    await existingCourse.save();
+
+    // Populate the course with lessons
+    const updatedCourse = await courseModel
+      .findById(course)
+      .populate("lessons");
 
     return res.status(201).json({
       message: "Lesson created successfully!",
-      lesson: {
-        id: result.id,
-        title: result.title,
-        description: result.description,
-        videoUrl: result.videoUrl,
-        course: result.course,
-        isPublished: result.isPublished,
-        isFree: result.isFree,
-        duration: result.duration,
-      },
+      course: updatedCourse,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("Error creating lesson:", error.message);
     res.status(500).send("Server error");
   }
 };
