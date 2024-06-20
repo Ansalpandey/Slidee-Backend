@@ -26,13 +26,13 @@ This is a backend application built using Node.js, Express.js, and MongoDB to se
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/education-backend.git
+git clone https://github.com/your-username/project-x.git
 ```
 
 2. Install dependencies:
 
 ```bash
-cd education-backend
+cd project-x
 npm install
 ```
 
