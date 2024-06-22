@@ -25,8 +25,8 @@ app.use("/api/v1/courses/", courseRouter);
 app.use("/api/v1/lessons/", lessonRouter);
 
 //Server running
-app.listen(process.env.PORT || 3000, () => {
-  console.log("Server started");
-});
+// app.listen(process.env.PORT || 3000, () => {
+//   console.log("Server started");
+// });
 
 module.exports.handler = serverless(app);
