@@ -6,7 +6,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 exports.getUsers = (req, res) => {
-  userModel.find().then((result) => {
+  userModel.find().populate('courses').then((result) => {
     return res.status(200).json({
       message: "Users retrieved successfully!",
       users: result,

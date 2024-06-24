@@ -4,7 +4,7 @@ const userModel = require("../models/user.model");
 const mongoose = require("mongoose");
 
 exports.getLessons = (req, res) => {
-  lessonModel.find().then((result) => {
+  lessonModel.find().populate('courses').then((result) => {
     return res.status(200).json({
       message: "Lessons retrieved successfully!",
       lessons: result,
@@ -31,7 +31,10 @@ exports.createLesson = async (req, res) => {
       !course ||
       !madeBy ||
       typeof isPublished === "undefined" ||
-      typeof isFree === "undefined"
+      typeof isFree === "undefined" ||
+      !duration ||
+      !videoUrl ||
+      !description
     ) {
       return res
         .status(400)
