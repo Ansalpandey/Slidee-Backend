@@ -14,8 +14,6 @@ const lessonSchema = new mongoose.Schema(
     },
     videoUrl: {
       type: String,
-      required: false,
-      trim: true,
     },
     course: {
       type: mongoose.Schema.Types.ObjectId,

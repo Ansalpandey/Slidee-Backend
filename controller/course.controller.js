@@ -1,6 +1,5 @@
 const courseModel = require("../models/course.model");
 const mongoose = require("mongoose");
-const lessonModel = require("../models/lessons.model");
 
 exports.getCourses = (req, res) => {
   courseModel

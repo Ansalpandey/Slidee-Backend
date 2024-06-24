@@ -1,15 +1,18 @@
 const lessonModel = require("../models/lessons.model");
 const courseModel = require("../models/course.model");
-const userModel = require("../models/user.model");
+const uploadOnCloudinary = require("../utils/cloudinary.util");
 const mongoose = require("mongoose");
 
 exports.getLessons = (req, res) => {
-  lessonModel.find().populate('courses').then((result) => {
-    return res.status(200).json({
-      message: "Lessons retrieved successfully!",
-      lessons: result,
+  lessonModel
+    .find()
+    .populate("courses")
+    .then((result) => {
+      return res.status(200).json({
+        message: "Lessons retrieved successfully!",
+        lessons: result,
+      });
     });
-  });
 };
 
 exports.createLesson = async (req, res) => {

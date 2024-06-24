@@ -1,25 +1,27 @@
 const userModel = require("../models/user.model");
 const courseModel = require("../models/course.model");
-const lessonModel = require("../models/lessons.model");
+const uploadOnCloudinary = require("../utils/cloudinary.util");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 exports.getUsers = (req, res) => {
-  userModel.find().populate('courses').then((result) => {
-    return res.status(200).json({
-      message: "Users retrieved successfully!",
-      users: result,
+  userModel
+    .find()
+    .populate("courses")
+    .then((result) => {
+      return res.status(200).json({
+        message: "Users retrieved successfully!",
+        users: result,
+      });
     });
-  });
 };
-
 exports.createUser = async (req, res) => {
   const { name, email, password, age, username } = req.body;
 
   try {
     // Validate input
-    if ((!name || !email || !password, !age || !username)) {
+    if (!name || !email || !password || !age || !username) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -33,6 +35,12 @@ exports.createUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    // Upload the profile picture and cover image
+    const profilePicture = await uploadOnCloudinary(
+      req.files.profileImage[0].path
+    );
+    const coverImage = await uploadOnCloudinary(req.files.coverImage[0].path);
+
     // Create a new user instance
     user = new userModel({
       name,
@@ -40,6 +48,8 @@ exports.createUser = async (req, res) => {
       age,
       username,
       password: hashedPassword,
+      profileImage: profilePicture.url,
+      coverImage: coverImage.url,
     });
 
     // Save the user to the database
@@ -53,6 +63,8 @@ exports.createUser = async (req, res) => {
         email: result.email,
         age: result.age,
         username: result.username,
+        profileImage: result.profilePicture,
+        coverImage: result.coverImage,
       },
     });
   } catch (error) {

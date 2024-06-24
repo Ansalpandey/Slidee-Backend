@@ -18,19 +18,25 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    profileImage: {
+      type: String,
+    },
+    bio: {
+      type: String,
+    },
+
+    coverImage: {
+      type: String,
+    },
+
     age: {
       type: Number,
       required: true,
     },
-
-    courses:{
+    courses: {
       type: [mongoose.Schema.Types.ObjectId],
       ref: "Course",
     },
-    isTeacher:{
-      type: Boolean,
-      default: false,
-    }
   },
   { timestamps: true }
 );
