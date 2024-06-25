@@ -2,13 +2,14 @@ const express = require("express");
 const router = express.Router();
 const lessonController = require("../controller/lessons.controller");
 const auth = require("../middleware/auth.middleware");
+
 router.use(auth);
 
 router.get("/", (req, res) => {
   lessonController.getLessons(req, res);
 });
 
-router.route("/create").post(
+router.post("/create", 
   (req, res) => {
     lessonController.createLesson(req, res);
   }
