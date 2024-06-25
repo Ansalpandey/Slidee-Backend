@@ -1,4 +1,3 @@
-const serverless = require("serverless-http");
 const express = require("express");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -29,4 +28,3 @@ app.listen(process.env.PORT || 3000, () => {
   console.log("Server started");
 });
 
-module.exports.handler = serverless(app);
