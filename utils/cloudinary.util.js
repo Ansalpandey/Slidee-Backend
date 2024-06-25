@@ -26,4 +26,29 @@ const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
+const uploadVideoOnCloudinary = async (localFilePath) => {
+  try {
+    if (!localFilePath) return null;
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_large(
+        file,
+        {
+          resource_type: "video",
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          }
+          resolve(result);
+        }
+      );
+    });
+    console.log(`> Result: ${result.secure_url}`);
+  } catch (error){
+    fs.unlinkSync(localFilePath); //remove the locally stored file as the upload to the cloud got failed.
+    return null;
+  }
+};
+
 module.exports = uploadOnCloudinary;
+module.exports = uploadVideoOnCloudinary;

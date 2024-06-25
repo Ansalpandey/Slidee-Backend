@@ -1,6 +1,6 @@
 const lessonModel = require("../models/lessons.model");
 const courseModel = require("../models/course.model");
-const uploadOnCloudinary = require("../utils/cloudinary.util");
+
 const mongoose = require("mongoose");
 
 exports.getLessons = (req, res) => {
@@ -26,7 +26,6 @@ exports.createLesson = async (req, res) => {
     duration,
     madeBy,
   } = req.body;
-
   try {
     // Validate input
     if (
@@ -43,13 +42,11 @@ exports.createLesson = async (req, res) => {
         .status(400)
         .json({ message: "All required fields must be provided" });
     }
-
     // Check if the course exists
     const existingCourse = await courseModel.findById(course);
     if (!existingCourse) {
       return res.status(404).json({ message: "Course not found" });
     }
-
     // Create a new lesson
     const lesson = new lessonModel({
       title,
@@ -61,19 +58,15 @@ exports.createLesson = async (req, res) => {
       duration,
       madeBy,
     });
-
     // Save the lesson to the database
     const savedLesson = await lesson.save();
-
     // Update the course to include the new lesson
     existingCourse.lessons.push(savedLesson._id);
     await existingCourse.save();
-
     // Populate the course with lessons
     const updatedCourse = await courseModel
       .findById(course)
       .populate("lessons");
-
     return res.status(201).json({
       message: "Lesson created successfully!",
       course: updatedCourse,

@@ -2,17 +2,17 @@ const express = require("express");
 const router = express.Router();
 const lessonController = require("../controller/lessons.controller");
 const auth = require("../middleware/auth.middleware");
-const upload = require("../middleware/multer.middleware");
-
 router.use(auth);
 
 router.get("/", (req, res) => {
   lessonController.getLessons(req, res);
 });
 
-router.route("/create").post((req, res) => {
-  lessonController.createLesson(req, res);
-});
+router.route("/create").post(
+  (req, res) => {
+    lessonController.createLesson(req, res);
+  }
+);
 
 router.put("/:id", (req, res) => {
   lessonController.updateLesson(req, res);
