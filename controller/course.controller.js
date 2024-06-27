@@ -10,15 +10,19 @@ exports.getCourses = (req, res) => {
         message: "Courses retrieved successfully!",
         courses: result,
       });
+    })
+    .catch((error) => {
+      console.error("Error retrieving courses:", error);
+      return res.status(500).json({ message: "Server error" });
     });
 };
 
 exports.createCourse = async (req, res) => {
-  const { name, description, fee, rating } = req.body;
+  const { name, description, fee, rating, madeBy } = req.body;
 
   try {
     // Validate input
-    if (!name || !description || !fee || !rating) {
+    if (!name || !description || !fee || !rating || !madeBy) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -34,6 +38,7 @@ exports.createCourse = async (req, res) => {
       description,
       fee,
       rating,
+      madeBy: new mongoose.Types.ObjectId(madeBy),
     });
 
     // Save the course to the database

@@ -27,4 +27,3 @@ app.use("/api/v1/lessons/", lessonRouter);
 app.listen(process.env.PORT || 3000, () => {
   console.log("Server started");
 });
-

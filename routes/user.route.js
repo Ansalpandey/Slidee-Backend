@@ -25,7 +25,7 @@ router.route("/register").post(
 );
 
 router.post("/login", (req, res) => {
-  userController.loginUser(req,res);
+  userController.loginUser(req, res);
 });
 
 router.get("/:id", auth, (req, res) => {

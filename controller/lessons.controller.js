@@ -1,35 +1,64 @@
 const lessonModel = require("../models/lessons.model");
 const mongoose = require("mongoose");
+const { uploadVideoOnCloudinary } = require("../utils/cloudinary.util");
+const courseModel = require("../models/course.model");
+
 exports.getLessons = (req, res) => {
-  lessonModel.find().then((result) => {
-    return res.status(200).json({
-      message: "Lessons retrieved successfully!",
-      lessons: result,
+  lessonModel
+    .find()
+    .populate("course")
+    .then((result) => {
+      return res.status(200).json({
+        message: "Lessons retrieved successfully!",
+        lessons: result,
+      });
     });
-  });
 };
 
 exports.createLesson = async (req, res) => {
-  const {
-    title,
-    description,
-    videoUrl,
-    course,
-    isPublished,
-    isFree,
-    duration,
-  } = req.body;
+  const { title, description, course, isPublished, isFree, duration, madeBy } =
+    req.body;
 
   try {
     // Validate input
     if (
-      (!title || !description || !videoUrl,
-      !course,
-      !isPublished,
-      !isFree,
-      !duration)
+      !title ||
+      !course ||
+      !madeBy ||
+      typeof isPublished === "undefined" ||
+      typeof isFree === "undefined" ||
+      !duration ||
+      !description
     ) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ message: "All required fields must be provided" });
+    }
+
+    // Check if the course exists
+    const existingCourse = await courseModel.findById(course);
+    if (!existingCourse) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Check if video file is present
+    if (!req.files || !req.files.videoUrl || req.files.videoUrl.length === 0) {
+      return res.status(400).json({ message: "Video file must be provided" });
+    }
+
+    const video = req.files.videoUrl[0];
+
+    // Log the video file details
+    console.log("Video file details:", video);
+
+    // Upload video to cloudinary
+    const videoUrl = await uploadVideoOnCloudinary(video.path);
+
+    // Log the Cloudinary URL
+    console.log("Uploaded video URL:", videoUrl);
+
+    if (!videoUrl) {
+      return res.status(500).json({ message: "Failed to upload video" });
     }
 
     // Create a new lesson
@@ -41,26 +70,27 @@ exports.createLesson = async (req, res) => {
       isPublished,
       isFree,
       duration,
-      madeBy: req.user.id,
+      madeBy,
     });
 
     // Save the lesson to the database
-    const result = await lesson.save();
+    const savedLesson = await lesson.save();
+
+    // Update the course to include the new lesson
+    existingCourse.lessons.push(savedLesson._id);
+    await existingCourse.save();
+
+    // Populate the course with lessons
+    const updatedCourse = await courseModel
+      .findById(course)
+      .populate("lessons");
+
     return res.status(201).json({
       message: "Lesson created successfully!",
-      lesson: {
-        id: result.id,
-        title: result.title,
-        description: result.description,
-        videoUrl: result.videoUrl,
-        course: result.course,
-        isPublished: result.isPublished,
-        isFree: result.isFree,
-        duration: result.duration,
-      },
+      course: updatedCourse,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("Error creating lesson:", error.message);
     res.status(500).send("Server error");
   }
 };

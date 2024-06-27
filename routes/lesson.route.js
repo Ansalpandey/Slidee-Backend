@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const lessonController = require("../controller/lessons.controller");
 const auth = require("../middleware/auth.middleware");
+const upload = require("../middleware/multer.middleware");
 
 router.use(auth);
 
@@ -9,7 +10,14 @@ router.get("/", (req, res) => {
   lessonController.getLessons(req, res);
 });
 
-router.post("/create", 
+router.post(
+  "/create",
+  upload.fields([
+    {
+      name: "videoUrl",
+      maxCount: 1,
+    },
+  ]),
   (req, res) => {
     lessonController.createLesson(req, res);
   }

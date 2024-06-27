@@ -14,8 +14,13 @@ exports.getUsers = (req, res) => {
         message: "Users retrieved successfully!",
         users: result,
       });
+    })
+    .catch((error) => {
+      console.error("Error retrieving users:", error);
+      return res.status(500).json({ message: "Server error" });
     });
 };
+
 exports.createUser = async (req, res) => {
   const { name, email, password, age, username } = req.body;
 
@@ -30,16 +35,15 @@ exports.createUser = async (req, res) => {
     if (user) {
       return res.status(400).json({ message: "User already exists" });
     }
-
     // Hash the password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Upload the profile picture and cover image
     const profilePicture = await uploadOnCloudinary(
-      req.files.profileImage[0].path
+      req.files?.profileImage[0]?.path
     );
-    const coverImage = await uploadOnCloudinary(req.files.coverImage[0].path);
+    const coverImage = await uploadOnCloudinary(req.files?.coverImage[0]?.path);
 
     // Create a new user instance
     user = new userModel({
@@ -54,7 +58,6 @@ exports.createUser = async (req, res) => {
 
     // Save the user to the database
     const result = await user.save();
-
     return res.status(201).json({
       message: "User created successfully!",
       user: {
@@ -119,6 +122,9 @@ exports.loginUser = async (req, res) => {
             name: user.name,
             email: user.email,
             age: user.age,
+            username: user.username,
+            profileImage: user.profileImage,
+            coverImage: user.coverImage,
           },
         });
       }
