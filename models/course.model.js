@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const courseSchema = new mongoose.Schema(
+const Schema = mongoose.Schema;
+const courseSchema = new Schema(
   {
     name: {
       type: String,
@@ -25,13 +26,13 @@ const courseSchema = new mongoose.Schema(
     },
     lessons: [
       {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Lesson",
       },
     ],
     madeBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: Schema.Types.ObjectId,
+      ref: "Users",
       required: true,
     },
   },

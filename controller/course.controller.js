@@ -1,6 +1,6 @@
 const courseModel = require("../models/course.model");
 const mongoose = require("mongoose");
-
+const userModel = require("../models/user.model");
 exports.getCourses = (req, res) => {
   courseModel
     .find()
@@ -43,6 +43,11 @@ exports.createCourse = async (req, res) => {
 
     // Save the course to the database
     const result = await course.save();
+
+    // Update the user with the new course
+    await userModel.findByIdAndUpdate(madeBy, {
+      $push: { courses: result._id },
+    });
 
     return res.status(201).json({
       message: "Course created successfully!",

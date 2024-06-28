@@ -1,6 +1,6 @@
 const userModel = require("../models/user.model");
 const courseModel = require("../models/course.model");
-const uploadOnCloudinary = require("../utils/cloudinary.util");
+const { uploadOnCloudinary } = require("../utils/cloudinary.util");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -41,9 +41,9 @@ exports.createUser = async (req, res) => {
 
     // Upload the profile picture and cover image
     const profilePicture = await uploadOnCloudinary(
-      req.files?.profileImage[0]?.path
+      req.files.profileImage[0].path
     );
-    const coverImage = await uploadOnCloudinary(req.files?.coverImage[0]?.path);
+    const coverImage = await uploadOnCloudinary(req.files.coverImage[0].path);
 
     // Create a new user instance
     user = new userModel({
@@ -135,12 +135,15 @@ exports.loginUser = async (req, res) => {
 };
 
 exports.getUserById = (req, res) => {
-  userModel.findById(req.params.id).then((result) => {
-    return res.status(200).json({
-      message: "User retrieved successfully!",
-      user: result,
+  userModel
+    .findById(req.params.id)
+    .populate("courses")
+    .then((result) => {
+      return res.status(200).json({
+        message: "User retrieved successfully!",
+        user: result,
+      });
     });
-  });
 };
 
 exports.updateUser = (req, res) => {

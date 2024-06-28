@@ -28,17 +28,17 @@ const userSchema = new mongoose.Schema(
     coverImage: {
       type: String,
     },
+    courses: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Course",
+      },
+    ],
 
     age: {
       type: Number,
       required: true,
     },
-    courses: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Course",
-      },
-    ],
   },
   { timestamps: true }
 );
