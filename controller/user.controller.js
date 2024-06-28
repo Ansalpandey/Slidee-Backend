@@ -2,7 +2,7 @@ const userModel = require("../models/user.model");
 const courseModel = require("../models/course.model");
 const { uploadOnCloudinary } = require("../utils/cloudinary.util");
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 exports.getUsers = (req, res) => {
