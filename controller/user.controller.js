@@ -35,9 +35,6 @@ exports.createUser = async (req, res) => {
     if (user) {
       return res.status(400).json({ message: "User already exists" });
     }
-    // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
 
     // Upload the profile picture and cover image
     const profilePicture = await uploadOnCloudinary(
@@ -51,7 +48,7 @@ exports.createUser = async (req, res) => {
       email,
       age,
       username,
-      password: hashedPassword,
+      password,
       profileImage: profilePicture.url,
       coverImage: coverImage.url,
     });
@@ -87,7 +84,7 @@ exports.loginUser = async (req, res) => {
     }
 
     // Compare the password
-    const isMatch = bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
