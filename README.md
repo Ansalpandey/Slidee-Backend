@@ -73,11 +73,6 @@ The server will start running on `http://localhost:3000`.
 | GET    | /api/lessons/:id        | Get a specific lesson                      |
 | PUT    | /api/lessons/:id        | Update a specific lesson                   |
 | DELETE | /api/lessons/:id        | Delete a specific lesson                   |
-| GET    | /api/quizzes            | Get all quizzes                            |
-| POST   | /api/quizzes            | Create a new quiz                          |
-| GET    | /api/quizzes/:id        | Get a specific quiz                        |
-| PUT    | /api/quizzes/:id        | Update a specific quiz                     |
-| DELETE | /api/quizzes/:id        | Delete a specific quiz                     |
 | POST   | /api/enroll             | Enroll a user in a course                  |
 | GET    | /api/progress           | Get a user's progress in a course          |
 | POST   | /api/forums             | Create a new forum post                    |
