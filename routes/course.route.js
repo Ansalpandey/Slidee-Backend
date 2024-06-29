@@ -26,7 +26,7 @@ router.post("/find", (req, res) => {
 });
 
 router.get("/find/:id", (req, res) => {
-  courseController.findCourseById(req, res);
+  courseController.getCourseById(req, res);
 });
 
 module.exports = router;
