@@ -36,11 +36,19 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Upload the profile picture and cover image
-    const profilePicture = await uploadOnCloudinary(
-      req.files.profileImage[0].path
-    );
-    const coverImage = await uploadOnCloudinary(req.files.coverImage[0].path);
+    // Initialize profileImage and coverImage with default values
+    let profileImage = { url: '' };
+    let coverImage = { url: '' };
+
+    // Upload the profile picture if it is provided
+    if (req.files && req.files.profileImage && req.files.profileImage[0]) {
+      profileImage = await uploadOnCloudinary(req.files.profileImage[0].path);
+    }
+
+    // Upload the cover image if it is provided
+    if (req.files && req.files.coverImage && req.files.coverImage[0]) {
+      coverImage = await uploadOnCloudinary(req.files.coverImage[0].path);
+    }
 
     // Create a new user instance
     user = new userModel({
@@ -49,7 +57,7 @@ exports.createUser = async (req, res) => {
       age,
       username,
       password,
-      profileImage: profilePicture.url,
+      profileImage: profileImage.url,
       coverImage: coverImage.url,
     });
 
@@ -63,7 +71,7 @@ exports.createUser = async (req, res) => {
         email: result.email,
         age: result.age,
         username: result.username,
-        profileImage: result.profilePicture,
+        profileImage: result.profileImage,
         coverImage: result.coverImage,
       },
     });
@@ -72,7 +80,6 @@ exports.createUser = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-
 exports.loginUser = async (req, res) => {
   const { email, username, password } = req.body;
 
