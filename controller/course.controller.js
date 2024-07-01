@@ -1,9 +1,9 @@
-const courseModel = require("../models/course.model");
-const mongoose = require("mongoose");
-const userModel = require("../models/user.model");
-exports.getCourses = (req, res) => {
-  courseModel
-    .find()
+import { User } from "../models/user.model.js";
+import { Course } from "../models/course.model.js";
+import mongoose from "mongoose";
+
+const getCourses = (req, res) => {
+  Course.find()
     .populate("lessons")
     .then((result) => {
       return res.status(200).json({
@@ -17,7 +17,7 @@ exports.getCourses = (req, res) => {
     });
 };
 
-exports.createCourse = async (req, res) => {
+const createCourse = async (req, res) => {
   const { name, description, fee, rating, madeBy } = req.body;
 
   try {
@@ -27,13 +27,13 @@ exports.createCourse = async (req, res) => {
     }
 
     // Check if the course already exists
-    let course = await courseModel.findOne({ name });
+    let course = await Course.findOne({ name });
     if (course) {
       return res.status(400).json({ message: "Course already exists" });
     }
 
     // Create a new course instance
-    course = new courseModel({
+    course = new Course({
       name,
       description,
       fee,
@@ -45,7 +45,7 @@ exports.createCourse = async (req, res) => {
     const result = await course.save();
 
     // Update the user with the new course
-    await userModel.findByIdAndUpdate(madeBy, {
+    await User.findByIdAndUpdate(madeBy, {
       $push: { courses: result._id },
     });
 
@@ -58,7 +58,7 @@ exports.createCourse = async (req, res) => {
   }
 };
 
-exports.updateCourse = async (req, res) => {
+const updateCourse = async (req, res) => {
   const { name, description, fee, rating } = req.body;
 
   try {
@@ -68,7 +68,7 @@ exports.updateCourse = async (req, res) => {
     }
 
     // Check if the course exists
-    let course = await courseModel.findByIdAndUpdate({ _id: req.params.id });
+    let course = await Course.findByIdAndUpdate({ _id: req.params.id });
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
@@ -91,12 +91,12 @@ exports.updateCourse = async (req, res) => {
   }
 };
 
-exports.findCourse = async (req, res) => {
+const findCourse = async (req, res) => {
   const { name } = req.body;
 
   try {
     // Check if the course exists
-    let course = await courseModel.findOne({ name });
+    let course = await Course.findOne({ name });
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
@@ -106,23 +106,23 @@ exports.findCourse = async (req, res) => {
   }
 };
 
-exports.deleteCourse = async (req, res) => {
+const deleteCourse = async (req, res) => {
   const { name } = req.body;
 
   try {
     // Check if the course exists
-    let course = await courseModel.findOne({ name });
+    let course = await Course.findOne({ name });
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
-exports.getCourseById = async (req, res) => {
+const getCourseById = async (req, res) => {
   const { id } = req.params;
 
   try {
     // Check if the course exists
-    let course = await courseModel.findById(id);
+    let course = await Course.findById(id);
     if (!course) {
       return res.status(404).json({ message: "Course not found" });
     }
@@ -130,4 +130,13 @@ exports.getCourseById = async (req, res) => {
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
+};
+
+export {
+  getCourses,
+  createCourse,
+  updateCourse,
+  findCourse,
+  deleteCourse,
+  getCourseById,
 };

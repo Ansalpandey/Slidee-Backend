@@ -1,11 +1,9 @@
-const lessonModel = require("../models/lessons.model");
-const mongoose = require("mongoose");
-const { uploadVideoOnCloudinary } = require("../utils/cloudinary.util");
-const courseModel = require("../models/course.model");
+import { Lesson } from "../models/lessons.model.js";
+import { uploadVideoOnCloudinary } from "../utils/cloudinary.util.js";
+import { Course } from "../models/course.model.js";
 
-exports.getLessons = (req, res) => {
-  lessonModel
-    .find()
+const getLessons = (req, res) => {
+  Lesson.find()
     .populate("course")
     .then((result) => {
       return res.status(200).json({
@@ -15,7 +13,7 @@ exports.getLessons = (req, res) => {
     });
 };
 
-exports.createLesson = async (req, res) => {
+const createLesson = async (req, res) => {
   const { title, description, course, isPublished, isFree, duration, madeBy } =
     req.body;
 
@@ -36,7 +34,7 @@ exports.createLesson = async (req, res) => {
     }
 
     // Check if the course exists
-    const existingCourse = await courseModel.findById(course);
+    const existingCourse = await Course.findById(course);
     if (!existingCourse) {
       return res.status(404).json({ message: "Course not found" });
     }
@@ -62,7 +60,7 @@ exports.createLesson = async (req, res) => {
     }
 
     // Create a new lesson
-    const lesson = new lessonModel({
+    const lesson = new Lesson({
       title,
       description,
       videoUrl,
@@ -81,9 +79,7 @@ exports.createLesson = async (req, res) => {
     await existingCourse.save();
 
     // Populate the course with lessons
-    const updatedCourse = await courseModel
-      .findById(course)
-      .populate("lessons");
+    const updatedCourse = await Course.findById(course).populate("lessons");
 
     return res.status(201).json({
       message: "Lesson created successfully!",
@@ -95,7 +91,7 @@ exports.createLesson = async (req, res) => {
   }
 };
 
-exports.updateLesson = async (req, res) => {
+const updateLesson = async (req, res) => {
   const {
     title,
     description,
@@ -119,7 +115,7 @@ exports.updateLesson = async (req, res) => {
     }
 
     // Find the lesson by id
-    const lesson = await lessonModel.findById(req.params.id);
+    const lesson = await Lesson.findById(req.params.id);
     // Update the lesson
     lesson.title = title;
     lesson.description = description;
@@ -148,10 +144,10 @@ exports.updateLesson = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-exports.deleteLesson = async (req, res) => {
+const deleteLesson = async (req, res) => {
   try {
     // Find the lesson by id
-    const lesson = await lessonModel.findById(req.params.id);
+    const lesson = await Lesson.findById(req.params.id);
     // Delete the lesson
     await lesson.remove();
     return res.status(200).json({
@@ -162,10 +158,10 @@ exports.deleteLesson = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-exports.getLessonById = async (req, res) => {
+const getLessonById = async (req, res) => {
   try {
     // Find the lesson by id
-    const lesson = await lessonModel.findById(req.params.id);
+    const lesson = await Lesson.findById(req.params.id);
     return res.status(200).json({
       message: "Lesson retrieved successfully!",
       lesson: {
@@ -184,10 +180,10 @@ exports.getLessonById = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-exports.getLessonsByCourse = async (req, res) => {
+const getLessonsByCourse = async (req, res) => {
   try {
     // Find the lessons by course id
-    const lessons = await lessonModel.find({ course: req.params.courseId });
+    const lessons = await Lesson.find({ course: req.params.courseId });
     return res.status(200).json({
       message: "Lessons retrieved successfully!",
       lessons: lessons,
@@ -197,10 +193,10 @@ exports.getLessonsByCourse = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-exports.getPublishedLessons = async (req, res) => {
+const getPublishedLessons = async (req, res) => {
   try {
     // Find the published lessons
-    const lessons = await lessonModel.find({ isPublished: true });
+    const lessons = await Lesson.find({ isPublished: true });
     return res.status(200).json({
       message: "Published lessons retrieved successfully!",
       lessons: lessons,
@@ -209,4 +205,14 @@ exports.getPublishedLessons = async (req, res) => {
     console.error(error.message);
     res.status(500).send("Server error");
   }
+};
+
+export {
+  getLessons,
+  createLesson,
+  updateLesson,
+  deleteLesson,
+  getLessonById,
+  getLessonsByCourse,
+  getPublishedLessons,
 };

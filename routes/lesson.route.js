@@ -1,13 +1,21 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const lessonController = require("../controller/lessons.controller");
-const auth = require("../middleware/auth.middleware");
-const upload = require("../middleware/multer.middleware");
+import {
+  getLessons,
+  createLesson,
+  updateLesson,
+  deleteLesson,
+  getLessonsByCourse,
+  getPublishedLessons,
+  getLessonById,
+} from "../controller/lessons.controller.js";
+import { auth } from "../middleware/auth.middleware.js";
+import { upload } from "../middleware/multer.middleware.js";
 
 router.use(auth);
 
 router.get("/", (req, res) => {
-  lessonController.getLessons(req, res);
+  getLessons(req, res);
 });
 
 router.post(
@@ -19,24 +27,28 @@ router.post(
     },
   ]),
   (req, res) => {
-    lessonController.createLesson(req, res);
+    createLesson(req, res);
   }
 );
 
 router.put("/:id", (req, res) => {
-  lessonController.updateLesson(req, res);
+  updateLesson(req, res);
 });
 
 router.delete("/:id", (req, res) => {
-  lessonController.deleteLesson(req, res);
+  deleteLesson(req, res);
 });
 
 router.post("/find", (req, res) => {
-  lessonController.findLesson(req, res);
+  getLessonsByCourse(req, res);
 });
 
 router.get("/find/:id", (req, res) => {
-  lessonController.findLessonById(req, res);
+  getLessonById(req, res);
 });
 
-module.exports = router;
+router.get("/published", (req, res) => {
+  getPublishedLessons(req, res);
+});
+
+export default router;

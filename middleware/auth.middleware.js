@@ -1,6 +1,6 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken";
 
-module.exports = (req, res, next) => {
+const auth = (req, res, next) => {
   // Get token from cookie
   const token = req.cookies.token;
 
@@ -16,3 +16,5 @@ module.exports = (req, res, next) => {
     res.status(401).json({ msg: "Token is not valid" });
   }
 };
+
+export { auth };

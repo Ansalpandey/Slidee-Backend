@@ -1,11 +1,21 @@
-const express = require("express");
+import express from "express";
 const router = express.Router();
-const userController = require("../controller/user.controller");
-const auth = require("../middleware/auth.middleware");
-const upload = require("../middleware/multer.middleware");
+import {
+  getUsers,
+  createUser,
+  loginUser,
+  getUserById,
+  updateUser,
+  forgetPassword,
+  deleteUser,
+  getUserCourses,
+  logoutUser,
+} from "../controller/user.controller.js";
+import { auth } from "../middleware/auth.middleware.js";
+import { upload } from "../middleware/multer.middleware.js";
 
 router.get("/", auth, (req, res) => {
-  userController.getUsers(req, res);
+  getUsers(req, res);
 });
 
 router.route("/register").post(
@@ -20,36 +30,36 @@ router.route("/register").post(
     },
   ]),
   (req, res) => {
-    userController.createUser(req, res);
+    createUser(req, res);
   }
 );
 
 router.post("/login", (req, res) => {
-  userController.loginUser(req, res);
+  loginUser(req, res);
 });
 
 router.get("/:id", auth, (req, res) => {
-  userController.getUserById(req, res);
+  getUserById(req, res);
 });
 
 router.put("/:id", auth, (req, res) => {
-  userController.updateUser(req, res);
+  updateUser(req, res);
 });
 
 router.delete("/:id", auth, (req, res) => {
-  userController.deleteUser(req, res);
+  deleteUser(req, res);
 });
 
 router.post("/reset", (req, res) => {
-  userController.forgetPassword(req, res);
+  forgetPassword(req, res);
 });
 
 router.post("/logout", (req, res) => {
-  userController.logoutUser(req, res);
+  logoutUser(req, res);
 });
 
 router.get("/courses/:id", auth, (req, res) => {
-  userController.getUserCourses(req, res);
+  getUserCourses(req, res);
 });
 
-module.exports = router;
+export default router;

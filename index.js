@@ -1,7 +1,8 @@
-const express = require("express");
-const dotenv = require("dotenv");
+import express from "express";
+import dotenv from "dotenv";
 dotenv.config();
-const cookieParser = require("cookie-parser");
+import cookieParser from "cookie-parser";
+import { connectDB } from "./db/db.js";
 const app = express();
 
 //Middlewares
@@ -10,13 +11,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 //Database connection
-const connectDB = require("./db/db");
 connectDB();
 
 //Routes
-const userRouter = require("./routes/user.route");
-const courseRouter = require("./routes/course.route");
-const lessonRouter = require("./routes/lesson.route");
+import userRouter from "./routes/user.route.js";
+import courseRouter from "./routes/course.route.js";
+import lessonRouter from "./routes/lesson.route.js";
 
 //Endpoints
 app.use("/api/v1/users/", userRouter);

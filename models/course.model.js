@@ -1,5 +1,6 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 const Schema = mongoose.Schema;
+
 const courseSchema = new Schema(
   {
     name: {
@@ -39,4 +40,5 @@ const courseSchema = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Course", courseSchema);
+const Course = mongoose.model("Course", courseSchema);
+export { Course };

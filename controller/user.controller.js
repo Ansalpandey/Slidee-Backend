@@ -1,13 +1,12 @@
-const userModel = require("../models/user.model");
-const courseModel = require("../models/course.model");
-const { uploadOnCloudinary } = require("../utils/cloudinary.util");
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+import { User } from "../models/user.model.js";
+import { Course } from "../models/course.model.js";
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { uploadOnCloudinary } from "../utils/cloudinary.util.js";
 
-exports.getUsers = (req, res) => {
-  userModel
-    .find()
+const getUsers = (req, res) => {
+  User.find()
     .populate("courses")
     .then((result) => {
       return res.status(200).json({
@@ -21,7 +20,7 @@ exports.getUsers = (req, res) => {
     });
 };
 
-exports.createUser = async (req, res) => {
+const createUser = async (req, res) => {
   const { name, email, password, age, username } = req.body;
 
   try {
@@ -31,14 +30,14 @@ exports.createUser = async (req, res) => {
     }
 
     // Check if the user already exists
-    let user = await userModel.findOne({ email });
+    let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     // Initialize profileImage and coverImage with default values
-    let profileImage = { url: '' };
-    let coverImage = { url: '' };
+    let profileImage = { url: "" };
+    let coverImage = { url: "" };
 
     // Upload the profile picture if it is provided
     if (req.files && req.files.profileImage && req.files.profileImage[0]) {
@@ -51,7 +50,7 @@ exports.createUser = async (req, res) => {
     }
 
     // Create a new user instance
-    user = new userModel({
+    user = new User({
       name,
       email,
       age,
@@ -80,12 +79,12 @@ exports.createUser = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-exports.loginUser = async (req, res) => {
+const loginUser = async (req, res) => {
   const { email, username, password } = req.body;
 
   try {
     // Check if the user exists
-    let user = await userModel.findOne().or([{ email }, { username }]);
+    let user = await User.findOne().or([{ email }, { username }]);
     if (!user) {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
@@ -138,9 +137,8 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-exports.getUserById = (req, res) => {
-  userModel
-    .findById(req.params.id)
+const getUserById = (req, res) => {
+  User.findById(req.params.id)
     .populate("courses")
     .then((result) => {
       return res.status(200).json({
@@ -150,14 +148,13 @@ exports.getUserById = (req, res) => {
     });
 };
 
-exports.updateUser = (req, res) => {
+const updateUser = (req, res) => {
   const userId = req.params.id;
   const updateData = req.body;
 
   // Ensure the userId is a valid ObjectId
   if (mongoose.Types.ObjectId.isValid(userId)) {
-    userModel
-      .findByIdAndUpdate(userId, updateData, { new: true })
+    User.findByIdAndUpdate(userId, updateData, { new: true })
       .then((result) => {
         if (result) {
           return res.status(200).json({
@@ -183,10 +180,10 @@ exports.updateUser = (req, res) => {
   }
 };
 
-exports.forgetPassword = (req, res) => {
+const forgetPassword = (req, res) => {
   const { email } = req.body;
 
-  userModel.findOne({ email }).then((user) => {
+  User.findOne({ email }).then((user) => {
     if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
@@ -217,8 +214,8 @@ exports.forgetPassword = (req, res) => {
   });
 };
 
-exports.deleteUser = (req, res) => {
-  userModel.findByIdAndDelete(req.params.id).then((result) => {
+const deleteUser = (req, res) => {
+  User.findByIdAndDelete(req.params.id).then((result) => {
     return res.status(200).json({
       message: "User deleted successfully!",
       user: result,
@@ -226,9 +223,8 @@ exports.deleteUser = (req, res) => {
   });
 };
 
-exports.getUserCourses = (req, res) => {
-  courseModel
-    .find({ user: req.params.id })
+const getUserCourses = (req, res) => {
+  Course.find({ user: req.params.id })
     .populate("courses")
     .then((result) => {
       return res.status(200).json({
@@ -238,9 +234,21 @@ exports.getUserCourses = (req, res) => {
     });
 };
 
-exports.logoutUser = (req, res) => {
+const logoutUser = (req, res) => {
   res.clearCookie("token");
   return res.status(200).json({
     message: "Logged out successfully!",
   });
+};
+
+export {
+  getUsers,
+  createUser,
+  loginUser,
+  getUserById,
+  updateUser,
+  forgetPassword,
+  deleteUser,
+  getUserCourses,
+  logoutUser,
 };
