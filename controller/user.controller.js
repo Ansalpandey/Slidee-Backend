@@ -20,6 +20,21 @@ const getUsers = (req, res) => {
     });
 };
 
+const getMyProfile = (req, res) => {
+  User.findById(req.user.id)
+    .populate("courses")
+    .then((result) => {
+      return res.status(200).json({
+        message: "User retrieved successfully!",
+        user: result,
+      });
+    })
+    .catch((error) => {
+      console.error("Error retrieving user:", error);
+      return res.status(500).json({ message: "Server error" });
+    });
+};
+
 const createUser = async (req, res) => {
   const { name, email, password, age, username } = req.body;
 
@@ -79,6 +94,64 @@ const createUser = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+// const loginUser = async (req, res) => {
+//   const { email, username, password } = req.body;
+
+//   try {
+//     // Check if the user exists
+//     let user = await User.findOne().or([{ email }, { username }]);
+//     if (!user) {
+//       return res.status(400).json({ message: "Invalid Credentials" });
+//     }
+
+//     // Compare the password
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) {
+//       return res.status(400).json({ message: "Invalid Credentials" });
+//     }
+
+//     // Create a JWT payload
+//     const payload = {
+//       user: {
+//         id: user.id,
+//       },
+//     };
+
+//     // Sign the JWT token
+//     jwt.sign(
+//       payload,
+//       process.env.JWT_SECRET,
+//       { expiresIn: "1d" },
+//       (err, token) => {
+//         if (err) throw err;
+
+//         // Set the token in a cookie
+//         res.cookie("token", token, {
+//           httpOnly: true,
+//           secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+//           sameSite: "strict", // Adjust according to your needs
+//           maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+//         });
+
+//         return res.status(200).json({
+//           message: "Logged in successfully!",
+//           user: {
+//             id: user.id,
+//             name: user.name,
+//             email: user.email,
+//             age: user.age,
+//             username: user.username,
+//             profileImage: user.profileImage,
+//             coverImage: user.coverImage,
+//           },
+//         });
+//       }
+//     );
+//   } catch (error) {
+//     res.status(500).send("Server error");
+//   }
+// };
+
 const loginUser = async (req, res) => {
   const { email, username, password } = req.body;
 
@@ -110,14 +183,9 @@ const loginUser = async (req, res) => {
       (err, token) => {
         if (err) throw err;
 
-        // Set the token in a cookie
-        res.cookie("token", token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-          sameSite: "strict", // Adjust according to your needs
-          maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-        });
-
+        // Set the token in header
+        res.header("AccessToken", token);
+        
         return res.status(200).json({
           message: "Logged in successfully!",
           user: {
@@ -135,17 +203,6 @@ const loginUser = async (req, res) => {
   } catch (error) {
     res.status(500).send("Server error");
   }
-};
-
-const getUserById = (req, res) => {
-  User.findById(req.params.id)
-    .populate("courses")
-    .then((result) => {
-      return res.status(200).json({
-        message: "User retrieved successfully!",
-        user: result,
-      });
-    });
 };
 
 const updateUser = (req, res) => {
@@ -245,10 +302,10 @@ export {
   getUsers,
   createUser,
   loginUser,
-  getUserById,
   updateUser,
   forgetPassword,
   deleteUser,
   getUserCourses,
   logoutUser,
+  getMyProfile,
 };

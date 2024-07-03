@@ -4,12 +4,12 @@ import {
   getUsers,
   createUser,
   loginUser,
-  getUserById,
   updateUser,
   forgetPassword,
   deleteUser,
   getUserCourses,
   logoutUser,
+  getMyProfile,
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -38,10 +38,6 @@ router.post("/login", (req, res) => {
   loginUser(req, res);
 });
 
-router.get("/:id", auth, (req, res) => {
-  getUserById(req, res);
-});
-
 router.put("/:id", auth, (req, res) => {
   updateUser(req, res);
 });
@@ -60,6 +56,10 @@ router.post("/logout", (req, res) => {
 
 router.get("/courses/:id", auth, (req, res) => {
   getUserCourses(req, res);
+});
+
+router.get("/profile", auth, (req, res) => {
+  getMyProfile(req, res);
 });
 
 export default router;
