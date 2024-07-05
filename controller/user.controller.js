@@ -21,7 +21,7 @@ const getUsers = (req, res) => {
 };
 
 const getMyProfile = (req, res) => {
-  User.findById(req.user.id)
+  User.findById(req.user.id, "-password")
     .populate("courses")
     .then((result) => {
       return res.status(200).json({
@@ -36,11 +36,11 @@ const getMyProfile = (req, res) => {
 };
 
 const createUser = async (req, res) => {
-  const { name, email, password, age, username } = req.body;
+  const { name, email, password, age, username, bio } = req.body;
 
   try {
     // Validate input
-    if (!name || !email || !password || !age || !username) {
+    if (!name || !email || !password || !age || !username || !bio) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -70,10 +70,18 @@ const createUser = async (req, res) => {
       email,
       age,
       username,
+      bio,
       password,
       profileImage: profileImage.url,
       coverImage: coverImage.url,
     });
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET
+    );
+
+    res.header("AccessToken", token);
 
     // Save the user to the database
     const result = await user.save();
@@ -87,6 +95,8 @@ const createUser = async (req, res) => {
         username: result.username,
         profileImage: result.profileImage,
         coverImage: result.coverImage,
+        bio: result.bio,
+        // token: token,
       },
     });
   } catch (error) {
@@ -94,63 +104,6 @@ const createUser = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
-// const loginUser = async (req, res) => {
-//   const { email, username, password } = req.body;
-
-//   try {
-//     // Check if the user exists
-//     let user = await User.findOne().or([{ email }, { username }]);
-//     if (!user) {
-//       return res.status(400).json({ message: "Invalid Credentials" });
-//     }
-
-//     // Compare the password
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) {
-//       return res.status(400).json({ message: "Invalid Credentials" });
-//     }
-
-//     // Create a JWT payload
-//     const payload = {
-//       user: {
-//         id: user.id,
-//       },
-//     };
-
-//     // Sign the JWT token
-//     jwt.sign(
-//       payload,
-//       process.env.JWT_SECRET,
-//       { expiresIn: "1d" },
-//       (err, token) => {
-//         if (err) throw err;
-
-//         // Set the token in a cookie
-//         res.cookie("token", token, {
-//           httpOnly: true,
-//           secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-//           sameSite: "strict", // Adjust according to your needs
-//           maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
-//         });
-
-//         return res.status(200).json({
-//           message: "Logged in successfully!",
-//           user: {
-//             id: user.id,
-//             name: user.name,
-//             email: user.email,
-//             age: user.age,
-//             username: user.username,
-//             profileImage: user.profileImage,
-//             coverImage: user.coverImage,
-//           },
-//         });
-//       }
-//     );
-//   } catch (error) {
-//     res.status(500).send("Server error");
-//   }
-// };
 
 const loginUser = async (req, res) => {
   const { email, username, password } = req.body;
@@ -171,7 +124,9 @@ const loginUser = async (req, res) => {
     // Create a JWT payload
     const payload = {
       user: {
-        id: user.id,
+        id: user._id,
+        email: user.email,
+        username: user.username,
       },
     };
 
@@ -182,10 +137,7 @@ const loginUser = async (req, res) => {
       { expiresIn: "1d" },
       (err, token) => {
         if (err) throw err;
-
-        // Set the token in header
         res.header("AccessToken", token);
-        
         return res.status(200).json({
           message: "Logged in successfully!",
           user: {
@@ -196,6 +148,7 @@ const loginUser = async (req, res) => {
             username: user.username,
             profileImage: user.profileImage,
             coverImage: user.coverImage,
+            // token: token,
           },
         });
       }

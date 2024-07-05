@@ -38,7 +38,7 @@ const createCourse = async (req, res) => {
       description,
       fee,
       rating,
-      madeBy: new mongoose.Types.ObjectId(madeBy),
+      madeBy: mongoose.Types.ObjectId(madeBy),
     });
 
     // Save the course to the database

@@ -6,9 +6,14 @@ import { connectDB } from "./db/db.js";
 const app = express();
 
 //Middlewares
-app.use(express.json({ limit: "20kb" }));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+app.use((req, res, next) => {
+  console.log("HTTP request - ", req.method + " , " + req.url);
+  next();
+});
 
 //Database connection
 connectDB();
