@@ -75,14 +75,6 @@ const createUser = async (req, res) => {
       profileImage: profileImage.url,
       coverImage: coverImage.url,
     });
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET
-    );
-
-    res.header("AccessToken", token);
-
     // Save the user to the database
     const result = await user.save();
     return res.status(201).json({
@@ -96,7 +88,6 @@ const createUser = async (req, res) => {
         profileImage: result.profileImage,
         coverImage: result.coverImage,
         bio: result.bio,
-        // token: token,
       },
     });
   } catch (error) {
@@ -144,11 +135,12 @@ const loginUser = async (req, res) => {
             id: user.id,
             name: user.name,
             email: user.email,
+            bio: user.bio,
             age: user.age,
             username: user.username,
             profileImage: user.profileImage,
             coverImage: user.coverImage,
-            // token: token,
+            token: token,
           },
         });
       }
@@ -209,7 +201,7 @@ const forgetPassword = (req, res) => {
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: "1h" },
+      { expiresIn: "1d" },
       (err, token) => {
         if (err) throw err;
 
