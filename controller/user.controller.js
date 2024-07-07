@@ -5,6 +5,13 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { uploadOnCloudinary } from "../utils/cloudinary.util.js";
 
+/**
+ * Retrieves all users from the database.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the retrieved users.
+ */
 const getUsers = (req, res) => {
   User.find()
     .populate("courses")
@@ -20,6 +27,13 @@ const getUsers = (req, res) => {
     });
 };
 
+/**
+ * Retrieves the profile of the authenticated user.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the user's profile.
+ */
 const getMyProfile = (req, res) => {
   User.findById(req.user.id, "-password")
     .populate("courses")
@@ -35,6 +49,14 @@ const getMyProfile = (req, res) => {
     });
 };
 
+/**
+ * Creates a new user.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the created user data.
+ * @throws {Error} If there is an error during the user creation process.
+ */
 const createUser = async (req, res) => {
   const { name, email, password, age, username, bio } = req.body;
 
@@ -96,6 +118,14 @@ const createUser = async (req, res) => {
   }
 };
 
+/**
+ * Logs in a user by checking the provided credentials and generating a JWT token.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the logged-in user details and JWT token.
+ * @throws {Error} If there is a server error.
+ */
 const loginUser = async (req, res) => {
   const { email, username, password } = req.body;
 
@@ -150,6 +180,13 @@ const loginUser = async (req, res) => {
   }
 };
 
+/**
+ * Updates a user by their ID.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The updated user object or an error message.
+ */
 const updateUser = (req, res) => {
   const userId = req.params.id;
   const updateData = req.body;
@@ -182,6 +219,13 @@ const updateUser = (req, res) => {
   }
 };
 
+/**
+ * Handles the forget password functionality.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with a reset link sent to the user's email.
+ */
 const forgetPassword = (req, res) => {
   const { email } = req.body;
 
@@ -216,6 +260,13 @@ const forgetPassword = (req, res) => {
   });
 };
 
+/**
+ * Deletes a user by ID.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with a success message and the deleted user.
+ */
 const deleteUser = (req, res) => {
   User.findByIdAndDelete(req.params.id).then((result) => {
     return res.status(200).json({
@@ -225,6 +276,13 @@ const deleteUser = (req, res) => {
   });
 };
 
+/**
+ * Retrieves courses for a specific user.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the retrieved courses.
+ */
 const getUserCourses = (req, res) => {
   Course.find({ user: req.params.id })
     .populate("courses")
@@ -236,6 +294,13 @@ const getUserCourses = (req, res) => {
     });
 };
 
+/**
+ * Logs out the user by clearing the token cookie.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with a success message.
+ */
 const logoutUser = (req, res) => {
   res.clearCookie("token");
   return res.status(200).json({

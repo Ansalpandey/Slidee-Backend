@@ -2,6 +2,13 @@ import { User } from "../models/user.model.js";
 import { Course } from "../models/course.model.js";
 import mongoose from "mongoose";
 
+/**
+ * Retrieves all courses from the database.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the retrieved courses.
+ */
 const getCourses = (req, res) => {
   Course.find()
     .populate("lessons")
@@ -17,6 +24,32 @@ const getCourses = (req, res) => {
     });
 };
 
+/**
+ * Create a new course.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The request body.
+ * @param {string} req.body.name - The name of the course.
+ * @param {string} req.body.description - The description of the course.
+ * @param {number} req.body.fee - The fee of the course.
+ * @param {number} req.body.rating - The rating of the course.
+ * @param {string} req.body.madeBy - The ID of the user who created the course.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object.
+ */
+/**
+ * Create a new course.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The request body.
+ * @param {string} req.body.name - The name of the course.
+ * @param {string} req.body.description - The description of the course.
+ * @param {number} req.body.fee - The fee of the course.
+ * @param {number} req.body.rating - The rating of the course.
+ * @param {string} req.body.madeBy - The ID of the user who created the course.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object.
+ */
 const createCourse = async (req, res) => {
   const { name, description, fee, rating, madeBy } = req.body;
 
@@ -58,6 +91,13 @@ const createCourse = async (req, res) => {
   }
 };
 
+/**
+ * Update a course.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object.
+ */
 const updateCourse = async (req, res) => {
   const { name, description, fee, rating } = req.body;
 
@@ -91,6 +131,13 @@ const updateCourse = async (req, res) => {
   }
 };
 
+/**
+ * Find a course by name.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object.
+ */
 const findCourse = async (req, res) => {
   const { name } = req.body;
 
@@ -106,17 +153,38 @@ const findCourse = async (req, res) => {
   }
 };
 
+/**
+ * Deletes a course.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object.
+ */
 const deleteCourse = async (req, res) => {
   const { name } = req.body;
 
   try {
     // Check if the course exists
     let course = await Course.findOne({ name });
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Delete the course
+    await Course.findByIdAndDelete(course._id);
+
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }
 };
 
+/**
+ * Get a course by its ID.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object.
+ */
 const getCourseById = async (req, res) => {
   const { id } = req.params;
 

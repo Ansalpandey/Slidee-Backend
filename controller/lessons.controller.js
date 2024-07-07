@@ -2,6 +2,13 @@ import { Lesson } from "../models/lessons.model.js";
 import { uploadVideoOnCloudinary } from "../utils/cloudinary.util.js";
 import { Course } from "../models/course.model.js";
 
+/**
+ * Retrieves all lessons.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the retrieved lessons.
+ */
 const getLessons = (req, res) => {
   Lesson.find()
     .populate("course")
@@ -13,6 +20,14 @@ const getLessons = (req, res) => {
     });
 };
 
+/**
+ * Creates a new lesson.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Promise<void>} - A promise that resolves when the lesson is created.
+ * @throws {Error} - If there is an error creating the lesson.
+ */
 const createLesson = async (req, res) => {
   const { title, description, course, isPublished, isFree, duration, madeBy } =
     req.body;
@@ -91,6 +106,38 @@ const createLesson = async (req, res) => {
   }
 };
 
+/**
+ * Update a lesson.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The request body.
+ * @param {string} req.body.title - The title of the lesson.
+ * @param {string} req.body.description - The description of the lesson.
+ * @param {string} req.body.videoUrl - The URL of the lesson video.
+ * @param {string} req.body.course - The course of the lesson.
+ * @param {boolean} req.body.isPublished - Indicates if the lesson is published.
+ * @param {boolean} req.body.isFree - Indicates if the lesson is free.
+ * @param {number} req.body.duration - The duration of the lesson in minutes.
+ * @param {Object} res - The response object.
+ * @returns {Object} The updated lesson object.
+ * @throws {Error} If there is an error updating the lesson.
+ */
+/**
+ * Update a lesson.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The request body.
+ * @param {string} req.body.title - The title of the lesson.
+ * @param {string} req.body.description - The description of the lesson.
+ * @param {string} req.body.videoUrl - The URL of the lesson video.
+ * @param {string} req.body.course - The course of the lesson.
+ * @param {boolean} req.body.isPublished - Indicates if the lesson is published.
+ * @param {boolean} req.body.isFree - Indicates if the lesson is free.
+ * @param {number} req.body.duration - The duration of the lesson in minutes.
+ * @param {Object} res - The response object.
+ * @returns {Object} The updated lesson object.
+ * @throws {Error} If there is an error updating the lesson.
+ */
 const updateLesson = async (req, res) => {
   const {
     title,
@@ -144,6 +191,13 @@ const updateLesson = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+/**
+ * Deletes a lesson by its ID.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with a success message or an error message.
+ */
 const deleteLesson = async (req, res) => {
   try {
     // Find the lesson by id
@@ -158,6 +212,14 @@ const deleteLesson = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+/**
+ * Get a lesson by its ID.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the retrieved lesson.
+ * @throws {Error} If there is a server error.
+ */
 const getLessonById = async (req, res) => {
   try {
     // Find the lesson by id
@@ -180,6 +242,14 @@ const getLessonById = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+/**
+ * Retrieves lessons by course ID.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object with the retrieved lessons.
+ * @throws {Error} If there is a server error.
+ */
 const getLessonsByCourse = async (req, res) => {
   try {
     // Find the lessons by course id
@@ -193,6 +263,13 @@ const getLessonsByCourse = async (req, res) => {
     res.status(500).send("Server error");
   }
 };
+/**
+ * Retrieves the published lessons.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @returns {Object} The response object containing the published lessons.
+ */
 const getPublishedLessons = async (req, res) => {
   try {
     // Find the published lessons

@@ -1,6 +1,18 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+/**
+ * Course Schema
+ * @typedef {Object} CourseSchema
+ * @property {string} name - The name of the course.
+ * @property {string} description - The description of the course.
+ * @property {number} fee - The fee of the course.
+ * @property {number} rating - The rating of the course.
+ * @property {Array<string>} lessons - The array of lesson IDs associated with the course.
+ * @property {string} madeBy - The ID of the user who created the course.
+ * @property {Date} createdAt - The timestamp when the course was created.
+ * @property {Date} updatedAt - The timestamp when the course was last updated.
+ */
 const courseSchema = new Schema(
   {
     name: {

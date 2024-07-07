@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema(
 
 // Middleware to hash password before saving
 userSchema.pre("save", function (next) {
+  /**
+   * Represents a user.
+   * @type {Object}
+   */
   const user = this;
   if (user.isModified("password")) {
     bcrypt.hash(user.password, 10, (err, hash) => {
@@ -68,6 +72,11 @@ userSchema.pre("findOneAndUpdate", async function (next) {
       const user = await this.model.findOne(this.getQuery());
 
       // Compare the new password with the current password
+      /**
+       * Indicates whether the updated password matches the user's password.
+       *
+       * @type {boolean}
+       */
       const isSamePassword = await bcrypt.compare(
         update.password,
         user.password

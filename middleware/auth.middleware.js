@@ -1,5 +1,13 @@
 import jwt from "jsonwebtoken";
 
+/**
+ * Middleware to authenticate requests using a token.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Function} next - The next middleware function.
+ * @returns {void}
+ */
 const auth = (req, res, next) => {
   // Get token from header
   const token = req.header('AccessToken');
