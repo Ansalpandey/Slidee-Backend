@@ -152,29 +152,24 @@ const loginUser = async (req, res) => {
     };
 
     // Sign the JWT token
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" },
-      (err, token) => {
-        if (err) throw err;
-        res.header("AccessToken", token);
-        return res.status(200).json({
-          message: "Logged in successfully!",
-          user: {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            bio: user.bio,
-            age: user.age,
-            username: user.username,
-            profileImage: user.profileImage,
-            coverImage: user.coverImage,
-            token: token,
-          },
-        });
-      }
-    );
+
+    const token = jwt.sign(payload, process.env.JWT_SECRET,);
+
+    res.status(200).json({
+      message: "User logged in successfully!",
+      token,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        age: user.age,
+        username: user.username,
+        profileImage: user.profileImage,
+        coverImage: user.coverImage,
+        bio: user.bio,
+      },
+    });
+
   } catch (error) {
     res.status(500).send("Server error");
   }
