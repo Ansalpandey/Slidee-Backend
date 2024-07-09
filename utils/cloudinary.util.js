@@ -27,6 +27,19 @@ export const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
+// Function to upload image from a base64 string
+export const uploadBase64Image = async (base64String) => {
+  try {
+    const response = await cloudinary.v2.uploader.upload(`data:image/jpeg;base64,${base64String}`, {
+      resource_type: "image",
+    });
+    return response;
+  } catch (error) {
+    console.error("Cloudinary upload error:", error);
+    return null;
+  }
+};
+
 export const uploadVideoOnCloudinary = (filePath) => {
   return new Promise((resolve, reject) => {
     cloudinary.v2.uploader.upload(

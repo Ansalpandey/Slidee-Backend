@@ -3,7 +3,7 @@ import { Course } from "../models/course.model.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { uploadOnCloudinary } from "../utils/cloudinary.util.js";
+import { uploadOnCloudinary, uploadBase64Image } from "../utils/cloudinary.util.js";
 
 /**
  * Retrieves all users from the database.
@@ -34,19 +34,27 @@ const getUsers = (req, res) => {
  * @param {Object} res - The response object.
  * @returns {Object} The response object with the user's profile.
  */
-const getMyProfile = (req, res) => {
-  User.findById(req.user.id, "-password")
-    .populate("courses")
-    .then((result) => {
-      return res.status(200).json({
-        message: "User retrieved successfully!",
-        user: result,
+
+const getMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("courses");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
       });
-    })
-    .catch((error) => {
-      console.error("Error retrieving user:", error);
-      return res.status(500).json({ message: "Server error" });
+    }
+
+    return res.status(200).json({
+      message: "User profile retrieved successfully!",
+      user: user,
     });
+  } catch (error) {
+    console.error("Error retrieving user profile:", error);
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
 };
 
 /**
@@ -58,7 +66,8 @@ const getMyProfile = (req, res) => {
  * @throws {Error} If there is an error during the user creation process.
  */
 const createUser = async (req, res) => {
-  const { name, email, password, age, username, bio } = req.body;
+  const { name, email, password, age, username, bio, profileImageBase64, coverImageBase64 } =
+    req.body;
 
   try {
     // Validate input
@@ -75,6 +84,16 @@ const createUser = async (req, res) => {
     // Initialize profileImage and coverImage with default values
     let profileImage = { url: "" };
     let coverImage = { url: "" };
+
+    // Upload the profile picture if it is provided
+    if (profileImageBase64) {
+      profileImage = await uploadBase64Image(profileImageBase64);
+    }
+
+    // Upload the cover image if it is provided
+    if (coverImageBase64) {
+      coverImage = await uploadBase64Image(coverImageBase64);
+    }
 
     // Upload the profile picture if it is provided
     if (req.files && req.files.profileImage && req.files.profileImage[0]) {
@@ -152,14 +171,15 @@ const loginUser = async (req, res) => {
     };
 
     // Sign the JWT token
-
-    const token = jwt.sign(payload, process.env.JWT_SECRET,);
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
 
     res.status(200).json({
       message: "User logged in successfully!",
       token,
       user: {
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
         age: user.age,
@@ -169,8 +189,8 @@ const loginUser = async (req, res) => {
         bio: user.bio,
       },
     });
-
   } catch (error) {
+    console.error(error);
     res.status(500).send("Server error");
   }
 };
