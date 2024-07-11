@@ -1,6 +1,10 @@
 import { User } from "../models/user.model.js";
 import { Course } from "../models/course.model.js";
 import mongoose from "mongoose";
+import {
+  uploadOnCloudinary,
+  uploadBase64Image,
+} from "../utils/cloudinary.util.js";
 
 /**
  * Retrieves all courses from the database.
@@ -12,6 +16,7 @@ import mongoose from "mongoose";
 const getCourses = (req, res) => {
   Course.find()
     .populate("lessons")
+    .populate("madeBy", "name")
     .then((result) => {
       return res.status(200).json({
         message: "Courses retrieved successfully!",
@@ -51,7 +56,9 @@ const getCourses = (req, res) => {
  * @returns {Object} The response object.
  */
 const createCourse = async (req, res) => {
-  const { name, description, fee, rating, madeBy } = req.body;
+  console.log(req.body); // Log the request body to debug
+
+  const { name, description, fee, rating, madeBy, thumbnailBase64 } = req.body;
 
   try {
     // Validate input
@@ -65,12 +72,24 @@ const createCourse = async (req, res) => {
       return res.status(400).json({ message: "Course already exists" });
     }
 
+    let thumbnail = { url: "" };
+
+    if (req.files && req.files.thumbnail && req.files.thumbnail[0]) {
+      thumbnail = await uploadOnCloudinary(req.files.thumbnail[0].path);
+    }
+
+    // Upload the profile picture if it is provided
+    if (thumbnailBase64) {
+      thumbnail = await uploadBase64Image(thumbnailBase64);
+    }
+
     // Create a new course instance
     course = new Course({
       name,
       description,
       fee,
       rating,
+      thumbnail: thumbnail.url,
       madeBy: new mongoose.Types.ObjectId(madeBy),
     });
 
@@ -172,7 +191,6 @@ const deleteCourse = async (req, res) => {
 
     // Delete the course
     await Course.findByIdAndDelete(course._id);
-
   } catch (error) {
     return res.status(500).json({ message: error.message });
   }

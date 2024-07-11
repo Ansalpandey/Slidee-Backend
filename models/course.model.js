@@ -31,6 +31,9 @@ const courseSchema = new Schema(
       type: Number,
       required: [true, "Course fee is required"],
     },
+    thumbnail: {
+      type: String,
+    },
     rating: {
       type: Number,
       default: 0.0, // Default value
@@ -45,7 +48,7 @@ const courseSchema = new Schema(
     ],
     madeBy: {
       type: Schema.Types.ObjectId,
-      ref: "Users",
+      ref: "User",
       required: true,
     },
   },

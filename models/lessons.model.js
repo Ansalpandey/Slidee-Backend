@@ -49,7 +49,7 @@ const lessonSchema = new mongoose.Schema(
     },
     madeBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Users",
+      ref: "User",
       required: true,
     },
   },

@@ -24,10 +24,6 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
     },
-
-    coverImage: {
-      type: String,
-    },
     courses: [
       {
         type: mongoose.Types.ObjectId,

@@ -9,6 +9,7 @@ import {
   getCourseById,
 } from "../controller/course.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
+import { upload } from "../middleware/multer.middleware.js";
 
 router.use(auth);
 
@@ -16,7 +17,7 @@ router.get("/", (req, res) => {
   getCourses(req, res);
 });
 
-router.post("/create", (req, res) => {
+router.post("/create", upload.fields([{ name: 'thumbnail', maxCount: 1 }]), (req, res) => {
   createCourse(req, res);
 });
 
