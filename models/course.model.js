@@ -34,6 +34,10 @@ const courseSchema = new Schema(
     thumbnail: {
       type: String,
     },
+    enrolledBy: {
+      type: [Schema.Types.ObjectId],
+      ref: "User",
+    },
     rating: {
       type: Number,
       default: 0.0, // Default value
@@ -54,6 +58,14 @@ const courseSchema = new Schema(
   },
   { timestamps: true }
 );
+
+courseSchema.virtual("enrolledCount").get(function () {
+  return this.enrolledBy.length;
+});
+
+// Ensure virtual fields are serialized
+courseSchema.set("toJSON", { virtuals: true });
+courseSchema.set("toObject", { virtuals: true });
 
 const Course = mongoose.model("Course", courseSchema);
 export { Course };

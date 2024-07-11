@@ -3,7 +3,10 @@ import { Course } from "../models/course.model.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { uploadOnCloudinary, uploadBase64Image } from "../utils/cloudinary.util.js";
+import {
+  uploadOnCloudinary,
+  uploadBase64Image,
+} from "../utils/cloudinary.util.js";
 
 /**
  * Retrieves all users from the database.
@@ -66,8 +69,16 @@ const getMyProfile = async (req, res) => {
  * @throws {Error} If there is an error during the user creation process.
  */
 const createUser = async (req, res) => {
-  const { name, email, password, age, username, bio, profileImageBase64, coverImageBase64 } =
-    req.body;
+  const {
+    name,
+    email,
+    password,
+    age,
+    username,
+    bio,
+    profileImageBase64,
+    coverImageBase64,
+  } = req.body;
 
   try {
     // Validate input

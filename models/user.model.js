@@ -18,6 +18,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    enrolledCourses: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Course",
+      },
+    ],
     profileImage: {
       type: String,
     },

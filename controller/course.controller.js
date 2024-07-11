@@ -13,14 +13,37 @@ import {
  * @param {Object} res - The response object.
  * @returns {Object} The response object with the retrieved courses.
  */
+// const getCourses = (req, res) => {
+//   Course.find()
+//     .populate("lessons")
+//     .populate("madeBy", "name")
+//     .populate("enrolledBy")
+//     .then((result) => {
+//       return res.status(200).json({
+//         message: "Courses retrieved successfully!",
+//         courses: result,
+//       });
+//     })
+//     .catch((error) => {
+//       console.error("Error retrieving courses:", error);
+//       return res.status(500).json({ message: "Server error" });
+//     });
+// };
+
 const getCourses = (req, res) => {
   Course.find()
     .populate("lessons")
     .populate("madeBy", "name")
+    .populate("enrolledBy", "name") // Populate enrolledBy if needed
     .then((result) => {
       return res.status(200).json({
         message: "Courses retrieved successfully!",
-        courses: result,
+        courses: result.map((course) => {
+          return {
+            ...course.toObject(),
+            enrolledCount: course.enrolledCount,
+          };
+        }),
       });
     })
     .catch((error) => {
@@ -218,6 +241,146 @@ const getCourseById = async (req, res) => {
   }
 };
 
+// const enrollCourse = async (req, res) => {
+//   const { userId, courseId } = req.body;
+
+//   try {
+//     // Validate input
+//     if (!userId || !courseId) {
+//       return res.status(400).json({ message: "User ID and Course ID are required" });
+//     }
+
+//     // Find the user and course
+//     const user = await User.findById(userId);
+//     const course = await Course.findById(courseId);
+
+//     if (!user || !course) {
+//       return res.status(404).json({ message: "User or Course not found" });
+//     }
+
+//     // Check if the user is already enrolled in the course
+//     if (user.enrolledCourses.includes(courseId)) {
+//       return res.status(400).json({ message: "User is already enrolled in this course" });
+//     }
+
+//     // Enroll the user in the course
+//     user.enrolledCourses.push(courseId);
+//     await user.save();
+
+//     return res.status(200).json({ message: "User enrolled in course successfully", user });
+//   } catch (error) {
+//     return res.status(500).json({ message: error.message });
+//   }
+// };
+
+// const unEnrollCourse = async (req, res) => {
+//   const { userId, courseId } = req.body;
+
+//   try {
+//     // Validate input
+//     if (!userId || !courseId) {
+//       return res.status(400).json({ message: "User ID and Course ID are required" });
+//     }
+
+//     // Find the user and course
+//     const user = await User.findById(userId);
+//     const course = await Course.findById(courseId);
+
+//     if (!user || !course) {
+//       return res.status(404).json({ message: "User or Course not found" });
+//     }
+
+//     // Check if the user is already enrolled in the course
+//     if (!user.enrolledCourses.some((id) => id.equals(courseId))) {
+//       return res.status(400).json({ message: "User is not enrolled in this course" });
+//     }
+
+//     // Unenroll the user from the course
+//     user.enrolledCourses = user.enrolledCourses.filter((id) => !id.equals(courseId));
+//     await user.save();
+
+//     return res.status(200).json({ message: "User unenrolled from course successfully", user });
+//   } catch (error) {
+//     return res.status(500).json({ message: error.message });
+//   }
+// };
+
+const enrollCourse = async (req, res) => {
+  const { userId, courseId } = req.body;
+
+  try {
+    if (!userId || !courseId) {
+      return res
+        .status(400)
+        .json({ message: "User ID and Course ID are required" });
+    }
+
+    const user = await User.findById(userId);
+    const course = await Course.findById(courseId);
+
+    if (!user || !course) {
+      return res.status(404).json({ message: "User or Course not found" });
+    }
+
+    if (user.enrolledCourses.includes(courseId)) {
+      return res
+        .status(400)
+        .json({ message: "User is already enrolled in this course" });
+    }
+
+    user.enrolledCourses.push(courseId);
+    course.enrolledBy.push(userId);
+
+    await user.save();
+    await course.save();
+
+    return res
+      .status(200)
+      .json({ message: "User enrolled in course successfully", user });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const unEnrollCourse = async (req, res) => {
+  const { userId, courseId } = req.body;
+
+  try {
+    if (!userId || !courseId) {
+      return res
+        .status(400)
+        .json({ message: "User ID and Course ID are required" });
+    }
+
+    const user = await User.findById(userId);
+    const course = await Course.findById(courseId);
+
+    if (!user || !course) {
+      return res.status(404).json({ message: "User or Course not found" });
+    }
+
+    if (!user.enrolledCourses.some((id) => id.equals(courseId))) {
+      return res
+        .status(400)
+        .json({ message: "User is not enrolled in this course" });
+    }
+
+    user.enrolledCourses = user.enrolledCourses.filter(
+      (id) => !id.equals(courseId)
+    );
+    course.enrolledBy = course.enrolledBy.filter((id) => !id.equals(userId));
+
+    await user.save();
+    await course.save();
+
+    return res
+      .status(200)
+      .json({ message: "User unenrolled from course successfully", user });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getCourses,
   createCourse,
@@ -225,4 +388,6 @@ export {
   findCourse,
   deleteCourse,
   getCourseById,
+  enrollCourse,
+  unEnrollCourse,
 };
