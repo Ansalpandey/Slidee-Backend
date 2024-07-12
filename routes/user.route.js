@@ -10,6 +10,7 @@ import {
   getUserCourses,
   logoutUser,
   getMyProfile,
+  refreshToken
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -60,6 +61,10 @@ router.get("/courses/:id", auth, (req, res) => {
 
 router.get("/profile", auth, (req, res) => {
   getMyProfile(req, res);
+});
+
+router.post("/refresh-token", (req, res) => {
+  refreshToken(req, res);
 });
 
 export default router;

@@ -334,6 +334,37 @@ const logoutUser = (req, res) => {
   });
 };
 
+const refreshToken = (req, res) => {
+  const token = req.headers.authorization.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    const payload = {
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+      },
+    };
+
+    const newToken = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    return res.status(200).json({
+      message: "Token refreshed successfully!",
+      token: newToken,
+    });
+  });
+};
+
 export {
   getUsers,
   createUser,
@@ -344,4 +375,5 @@ export {
   getUserCourses,
   logoutUser,
   getMyProfile,
+  refreshToken
 };
