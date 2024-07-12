@@ -22,11 +22,13 @@ connectDB();
 import userRouter from "./routes/user.route.js";
 import courseRouter from "./routes/course.route.js";
 import lessonRouter from "./routes/lesson.route.js";
+import postRouter from "./routes/post.route.js";
 
 //Endpoints
 app.use("/api/v1/users/", userRouter);
 app.use("/api/v1/courses/", courseRouter);
 app.use("/api/v1/lessons/", lessonRouter);
+app.use("/api/v1/posts/", postRouter);
 
 //Server running
 app.listen(process.env.PORT || 3000, () => {

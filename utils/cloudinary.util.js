@@ -57,7 +57,9 @@ export const uploadVideoOnCloudinary = (filePath) => {
           reject(error);
           fs.unlinkSync(filePath);
         } else {
-          resolve(result.secure_url); // Ensure you're returning the correct URL property
+          resolve({
+            url: result.secure_url,
+          }) // Ensure you're returning the correct URL property
           fs.unlinkSync(filePath);
         }
       }

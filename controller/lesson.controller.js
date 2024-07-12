@@ -1,4 +1,4 @@
-import { Lesson } from "../models/lessons.model.js";
+import { Lesson } from "../models/lesson.model.js";
 import { uploadVideoOnCloudinary } from "../utils/cloudinary.util.js";
 import { Course } from "../models/course.model.js";
 
@@ -60,9 +60,6 @@ const createLesson = async (req, res) => {
     }
 
     const video = req.files.videoUrl[0];
-
-    // Log the video file details
-    console.log("Video file details:", video);
 
     // Upload video to cloudinary
     const videoUrl = await uploadVideoOnCloudinary(video.path);

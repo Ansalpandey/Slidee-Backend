@@ -8,7 +8,7 @@ import {
   getLessonsByCourse,
   getPublishedLessons,
   getLessonById,
-} from "../controller/lessons.controller.js";
+} from "../controller/lesson.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
 
