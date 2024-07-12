@@ -375,5 +375,5 @@ export {
   getUserCourses,
   logoutUser,
   getMyProfile,
-  refreshToken
+  refreshToken,
 };

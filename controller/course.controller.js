@@ -62,8 +62,6 @@ const getCourses = (req, res) => {
  * @returns {Object} The response object.
  */
 const createCourse = async (req, res) => {
-  console.log(req.body); // Log the request body to debug
-
   const { name, description, fee, rating, madeBy, thumbnailBase64 } = req.body;
 
   try {

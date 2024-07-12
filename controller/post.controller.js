@@ -44,49 +44,41 @@ const getPost = async (req, res) => {
   }
 };
 
-
 const createPost = async (req, res) => {
   const { title, content, imageUrlBase64 } = req.body;
-  const user = req.user;
-  const createdBy = req.user._id;
+  const createdBy = req.user ? req.user._id : null;
+
+  if (!createdBy) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
 
   try {
-    console.log("Starting createPost function...");
-
     // Initialize imageUrl and videoUrl with default values
     let imageUrl = { url: "" };
     let videoUrl = { url: "" };
 
     // Upload the postImage if it is provided
     if (imageUrlBase64) {
-      console.log("Uploading base64 image...");
       imageUrl = await uploadBase64Image(imageUrlBase64);
     } else if (
       req.files &&
       req.files.imageUrl &&
       req.files.imageUrl.length > 0
     ) {
-      console.log("Uploading image file...");
       const imageFiles = req.files.imageUrl;
-      console.log("Image files received:", imageFiles);
       imageUrl = await uploadOnCloudinary(imageFiles[0].path);
     }
 
     // Upload video if it is provided
     if (req.files && req.files.videoUrl && req.files.videoUrl.length > 0) {
-      console.log("Uploading video file...");
       const videoFiles = req.files.videoUrl;
-      console.log("Video files received:", videoFiles);
       const video = videoFiles[0];
-      console.log("Video file path:", video.path);
       videoUrl = await uploadVideoOnCloudinary(video.path);
 
       // Ensure videoUrl has a valid url property
       if (!videoUrl || !videoUrl.url || videoUrl.url.trim() === "") {
         return res.status(500).json({ message: "Failed to upload video" });
       }
-
-      console.log("Uploaded video URL:", videoUrl.url);
     }
 
     const post = new Post({
@@ -94,11 +86,10 @@ const createPost = async (req, res) => {
       content,
       imageUrl: imageUrl.url,
       videoUrl: videoUrl.url,
-      createdBy: new mongoose.Types.ObjectId(createdBy), // Directly use req.user._id if it's already an ObjectId
+      createdBy: new mongoose.Types.ObjectId(createdBy),
     });
 
     await post.save();
-    console.log("Post created successfully:", post);
 
     res.status(201).json({
       message: "Post created successfully",

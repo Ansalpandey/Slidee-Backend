@@ -64,9 +64,6 @@ const createLesson = async (req, res) => {
     // Upload video to cloudinary
     const videoUrl = await uploadVideoOnCloudinary(video.path);
 
-    // Log the Cloudinary URL
-    console.log("Uploaded video URL:", videoUrl);
-
     if (!videoUrl) {
       return res.status(500).json({ message: "Failed to upload video" });
     }
@@ -98,7 +95,6 @@ const createLesson = async (req, res) => {
       course: updatedCourse,
     });
   } catch (error) {
-    console.error("Error creating lesson:", error.message);
     res.status(500).send("Server error");
   }
 };
@@ -184,7 +180,6 @@ const updateLesson = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Server error");
   }
 };
@@ -205,7 +200,6 @@ const deleteLesson = async (req, res) => {
       message: "Lesson deleted successfully!",
     });
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Server error");
   }
 };
@@ -235,7 +229,6 @@ const getLessonById = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Server error");
   }
 };
@@ -256,7 +249,6 @@ const getLessonsByCourse = async (req, res) => {
       lessons: lessons,
     });
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Server error");
   }
 };
@@ -276,7 +268,6 @@ const getPublishedLessons = async (req, res) => {
       lessons: lessons,
     });
   } catch (error) {
-    console.error(error.message);
     res.status(500).send("Server error");
   }
 };
