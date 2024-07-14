@@ -16,18 +16,20 @@ import {
  * @returns {Object} The response object with the retrieved users.
  */
 const getUsers = (req, res) => {
-  User.find()
-    .populate("courses")
-    .then((result) => {
-      return res.status(200).json({
-        message: "Users retrieved successfully!",
-        users: result,
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    User.find()
+      .populate("courses")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .then((result) => {
+        return res.status(200).json(result);
       });
-    })
-    .catch((error) => {
-      console.error("Error retrieving users:", error);
-      return res.status(500).json({ message: "Server error" });
-    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 /**
@@ -40,7 +42,9 @@ const getUsers = (req, res) => {
 
 const getMyProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate("courses");
+    const user = await User.findById(req.user._id)
+      .populate("courses")
+      .populate("enrolledCourses");
 
     if (!user) {
       return res.status(404).json({
@@ -198,6 +202,7 @@ const loginUser = async (req, res) => {
         profileImage: user.profileImage,
         coverImage: user.coverImage,
         bio: user.bio,
+        enrolledCourses: user.enrolledCourses,
       },
     });
   } catch (error) {

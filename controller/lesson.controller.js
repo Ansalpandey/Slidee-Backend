@@ -10,14 +10,20 @@ import { Course } from "../models/course.model.js";
  * @returns {Object} The response object with the retrieved lessons.
  */
 const getLessons = (req, res) => {
-  Lesson.find()
-    .populate("course")
-    .then((result) => {
-      return res.status(200).json({
-        message: "Lessons retrieved successfully!",
-        lessons: result,
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    Lesson.find()
+      .populate("course")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .then((result) => {
+        return res.status(200).json(result);
       });
-    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 /**

@@ -8,17 +8,19 @@ import {
 } from "../utils/cloudinary.util.js";
 
 const getPosts = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
   try {
-    const posts = await Post.find()
-      .populate("createdBy", "name") // Ensure 'name' is a valid field in User schema
-      .exec();
-    res.status(200).json({
-      message: "Posts retrieved successfully",
-      posts,
-    });
+    Post.find()
+      .populate("createdBy", " name username email profileImage") // Ensure 'username', 'email', and 'profileImage' are valid fields in User schema
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .then((result) => {
+        return res.status(200).json(result);
+      });
   } catch (error) {
-    console.error("Error retrieving posts:", error);
-    res.status(500).json({ message: error.message });
+    return res.status(500).json({ message: error.message });
   }
 };
 
@@ -45,7 +47,7 @@ const getPost = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { title, content, imageUrlBase64 } = req.body;
+  const { content, imageUrlBase64 } = req.body;
   const createdBy = req.user ? req.user._id : null;
 
   if (!createdBy) {
@@ -82,7 +84,6 @@ const createPost = async (req, res) => {
     }
 
     const post = new Post({
-      title,
       content,
       imageUrl: imageUrl.url,
       videoUrl: videoUrl.url,
@@ -100,6 +101,5 @@ const createPost = async (req, res) => {
     res.status(409).json({ message: error.message });
   }
 };
-
 
 export { getPosts, getPost, createPost };

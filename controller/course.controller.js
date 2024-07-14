@@ -14,25 +14,22 @@ import {
  * @returns {Object} The response object with the retrieved courses.
  */
 const getCourses = (req, res) => {
-  Course.find()
-    .populate("lessons")
-    .populate("madeBy", "name")
-    .populate("enrolledBy", "name") // Populate enrolledBy if needed
-    .then((result) => {
-      return res.status(200).json({
-        message: "Courses retrieved successfully!",
-        courses: result.map((course) => {
-          return {
-            ...course.toObject(),
-            enrolledCount: course.enrolledCount,
-          };
-        }),
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    Course.find()
+      .populate("lessons")
+      .populate("madeBy", "name")
+      .populate("enrolledBy", "name") // Populate enrolledBy if needed
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .then((result) => {
+        return res.status(200).json(result);
       });
-    })
-    .catch((error) => {
-      console.error("Error retrieving courses:", error);
-      return res.status(500).json({ message: "Server error" });
-    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 /**
