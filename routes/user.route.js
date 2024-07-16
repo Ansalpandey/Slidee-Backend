@@ -10,7 +10,8 @@ import {
   getUserCourses,
   logoutUser,
   getMyProfile,
-  refreshToken
+  refreshToken,
+  getUserPosts,
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -51,7 +52,7 @@ router.post("/reset", (req, res) => {
   forgetPassword(req, res);
 });
 
-router.post("/logout", (req, res) => {
+router.post("/logout", auth, (req, res) => {
   logoutUser(req, res);
 });
 
@@ -63,8 +64,12 @@ router.get("/profile", auth, (req, res) => {
   getMyProfile(req, res);
 });
 
-router.post("/refresh-token", (req, res) => {
+router.post("/refresh-token", auth, (req, res) => {
   refreshToken(req, res);
+});
+
+router.get("/posts", auth, (req, res) => {
+  getUserPosts(req, res);
 });
 
 export default router;

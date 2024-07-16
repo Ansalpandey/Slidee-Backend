@@ -1,5 +1,6 @@
 import { User } from "../models/user.model.js";
 import { Course } from "../models/course.model.js";
+import { Post } from "../models/post.model.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -29,6 +30,21 @@ const getUsers = (req, res) => {
       });
   } catch (error) {
     return res.status(500).json({ message: error.message });
+  }
+};
+
+const getUserPosts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const posts = await Post.find({ createdBy: userId })
+      .populate("createdBy", "username email") // Ensure 'username' and 'email' are valid fields in User schema
+      .exec();
+
+    res.status(200).json(posts);
+  } catch (error) {
+    console.error("Error retrieving posts:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -381,4 +397,5 @@ export {
   logoutUser,
   getMyProfile,
   refreshToken,
+  getUserPosts,
 };
