@@ -27,6 +27,21 @@ const userSchema = new mongoose.Schema(
     profileImage: {
       type: String,
     },
+    location: {
+      type: String,
+    },
+    followers: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
+      }
+    ],
+    following: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "User",
+      }
+    ],
     bio: {
       type: String,
     },

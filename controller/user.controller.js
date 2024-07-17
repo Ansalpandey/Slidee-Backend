@@ -16,32 +16,57 @@ import {
  * @param {Object} res - The response object.
  * @returns {Object} The response object with the retrieved users.
  */
-const getUsers = (req, res) => {
+const getUsers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
-    User.find()
+    const users = await User.find()
       .populate("courses")
       .skip((page - 1) * pageSize)
       .limit(pageSize)
-      .then((result) => {
-        return res.status(200).json(result);
-      });
+      .exec();
+
+    const totalUsers = await User.countDocuments();
+
+    res.status(200).json({
+      message: "Users retrieved successfully",
+      users,
+      totalPages: Math.ceil(totalUsers / pageSize),
+      currentPage: page,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error retrieving users:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
 const getUserPosts = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
   try {
     const userId = req.user._id;
 
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     const posts = await Post.find({ createdBy: userId })
-      .populate("createdBy", "username email") // Ensure 'username' and 'email' are valid fields in User schema
+      .populate("createdBy", "name username email profileImage")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
       .exec();
 
-    res.status(200).json(posts);
+    const totalPosts = await Post.countDocuments({ createdBy: userId });
+
+    res.status(200).json({
+      message: "Posts retrieved successfully",
+      posts,
+      totalPages: Math.ceil(totalPosts / pageSize),
+      currentPage: page,
+    });
   } catch (error) {
     console.error("Error retrieving posts:", error);
     res.status(500).json({ message: error.message });
@@ -330,15 +355,36 @@ const deleteUser = (req, res) => {
  * @param {Object} res - The response object.
  * @returns {Object} The response object with the retrieved courses.
  */
-const getUserCourses = (req, res) => {
-  Course.find({ user: req.params.id })
-    .populate("courses")
-    .then((result) => {
-      return res.status(200).json({
-        message: "Courses retrieved successfully!",
-        courses: result,
-      });
+const getUserCourses = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const courses = await Course.find({ createdBy: userId })
+      .populate("createdBy", "username email")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    const totalCourses = await Course.countDocuments({ createdBy: userId });
+
+    res.status(200).json({
+      message: "Courses retrieved successfully",
+      courses,
+      totalPages: Math.ceil(totalCourses / pageSize),
+      currentPage: page,
     });
+  } catch (error) {
+    console.error("Error retrieving courses:", error);
+    res.status(500).json({ message: error.message });
+  }
 };
 
 /**
@@ -386,6 +432,150 @@ const refreshToken = (req, res) => {
   });
 };
 
+const followUser = async (req, res) => {
+  const userId = req.params.id;
+  const followerId = req.user._id;
+
+  try {
+    // Check if the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the follower exists
+    const follower = await User.findById(followerId);
+    if (!follower) {
+      return res.status(404).json({ message: "Follower not found" });
+    }
+
+    // Check if the user is already followed
+    if (user.followers.includes(followerId)) {
+      return res.status(400).json({ message: "User is already followed" });
+    }
+
+    // Update the user's followers
+    user.followers.push(followerId);
+    await user.save();
+
+    // Update the follower's following
+    follower.following.push(userId);
+    await follower.save();
+
+    return res.status(200).json({
+      message: "User followed successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Error following user:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const unfollowUser = async (req, res) => {
+  const userId = req.params.id;
+  const followerId = req.user._id;
+
+  try {
+    // Check if the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the follower exists
+    const follower = await User.findById(followerId);
+    if (!follower) {
+      return res.status(404).json({ message: "Follower not found" });
+    }
+
+    // Check if the user is already followed
+    if (!user.followers.includes(followerId)) {
+      return res.status(400).json({ message: "User is not followed" });
+    }
+
+    // Update the user's followers
+    user.followers = user.followers.filter((id) => id !== followerId);
+    await user.save();
+
+    // Update the follower's following
+    follower.following = follower.following.filter((id) => id !== userId);
+    await follower.save();
+
+    return res.status(200).json({
+      message: "User unfollowed successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Error unfollowing user:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const getFollowers = async (req, res) => {
+  const userId = req.params.id;
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const followers = await User.find({ _id: { $in: user.followers } })
+      .select("name username profileImage")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    const totalFollowers = user.followers.length;
+
+    return res.status(200).json({
+      message: "User followers retrieved successfully",
+      followers,
+      totalPages: Math.ceil(totalFollowers / pageSize),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving user followers:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+const getFollowings = async (req, res) => {
+  const userId = req.params.id;
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const following = await User.find({ _id: { $in: user.following } })
+      .select("name username profileImage")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    const totalFollowing = user.following.length;
+
+    return res.status(200).json({
+      message: "User following retrieved successfully",
+      following,
+      totalPages: Math.ceil(totalFollowing / pageSize),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving user following:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getUsers,
   createUser,
@@ -398,4 +588,8 @@ export {
   getMyProfile,
   refreshToken,
   getUserPosts,
+  followUser,
+  unfollowUser,
+  getFollowers,
+  getFollowings,
 };

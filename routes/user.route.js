@@ -12,6 +12,10 @@ import {
   getMyProfile,
   refreshToken,
   getUserPosts,
+  followUser,
+  unfollowUser,
+  getFollowers,
+  getFollowings,
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -70,6 +74,22 @@ router.post("/refresh-token", auth, (req, res) => {
 
 router.get("/posts", auth, (req, res) => {
   getUserPosts(req, res);
+});
+
+router.post("/follow/:id", auth, (req, res) => {
+  followUser(req, res);
+});
+
+router.post("/unfollow/:id", auth, (req, res) => {
+  unfollowUser(req, res);
+});
+
+router.get("/followers/:id", auth, (req, res) => {
+  getFollowers(req, res);
+});
+
+router.get("/followings/:id", auth, (req, res) => {
+  getFollowings(req, res);
 });
 
 export default router;

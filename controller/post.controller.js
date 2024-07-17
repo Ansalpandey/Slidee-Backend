@@ -12,15 +12,23 @@ const getPosts = async (req, res) => {
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
-    Post.find()
-      .populate("createdBy", " name username email profileImage") // Ensure 'username', 'email', and 'profileImage' are valid fields in User schema
+    const posts = await Post.find()
+      .populate("createdBy", "name username email profileImage") // Ensure 'username', 'email', and 'profileImage' are valid fields in User schema
       .skip((page - 1) * pageSize)
       .limit(pageSize)
-      .then((result) => {
-        return res.status(200).json(result);
-      });
+      .exec();
+
+    const totalPosts = await Post.countDocuments();
+
+    res.status(200).json({
+      message: "Posts retrieved successfully",
+      posts,
+      totalPages: Math.ceil(totalPosts / pageSize),
+      currentPage: page,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error retrieving posts:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -102,4 +110,166 @@ const createPost = async (req, res) => {
   }
 };
 
-export { getPosts, getPost, createPost };
+const updatePost = async (req, res) => {
+  const { id } = req.params;
+  const { content, imageUrlBase64 } = req.body;
+  const userId = req.user ? req.user._id : null;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "User not authorized" });
+    }
+
+    // Initialize imageUrl with default value
+    let imageUrl = { url: "" };
+
+    // Upload the postImage if it is provided
+    if (imageUrlBase64) {
+      imageUrl = await uploadBase64Image(imageUrlBase64);
+    } else if (
+      req.files &&
+      req.files.imageUrl &&
+      req.files.imageUrl.length > 0
+    ) {
+      const imageFiles = req.files.imageUrl;
+      imageUrl = await uploadOnCloudinary(imageFiles[0].path);
+    }
+
+    post.content = content;
+    post.imageUrl = imageUrl.url;
+
+    await post.save();
+
+    res.status(200).json({
+      message: "Post updated successfully",
+      post,
+    });
+  } catch (error) {
+    console.error("Error updating post:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const deletePost = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user ? req.user._id : null;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "User not authorized" });
+    }
+
+    await post.remove();
+
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting post:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const likePost = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user ? req.user._id : null;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (post.likedBy.includes(userId)) {
+      return res.status(400).json({ message: "Post already liked" });
+    }
+
+    post.likes += 1;
+    post.likedBy.push(userId);
+
+    await post.save();
+
+    res.status(200).json({ message: "Post liked successfully" });
+  } catch (error) {
+    console.error("Error liking post:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const unlikePost = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user ? req.user._id : null;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    if (!post.likedBy.includes(userId)) {
+      return res.status(400).json({ message: "Post not liked yet" });
+    }
+
+    post.likes -= 1;
+    post.likedBy = post.likedBy.filter((id) => id.toString() !== userId.toString());
+
+    await post.save();
+
+    res.status(200).json({ message: "Post unliked successfully" });
+  } catch (error) {
+    console.error("Error unliking post:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getPostLikes = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const likes = await User.find({ _id: { $in: post.likedBy } });
+
+    res.status(200).json({
+      message: "Post likes retrieved successfully",
+      likes,
+    });
+  } catch (error) {
+    console.error("Error retrieving post likes:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export { getPosts, getPost, createPost, updatePost, deletePost, likePost, unlikePost, getPostLikes };

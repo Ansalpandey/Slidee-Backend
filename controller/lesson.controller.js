@@ -9,12 +9,12 @@ import { Course } from "../models/course.model.js";
  * @param {Object} res - The response object.
  * @returns {Object} The response object with the retrieved lessons.
  */
-const getLessons = (req, res) => {
+const getLessons = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
-    Lesson.find()
+    await Lesson.find()
       .populate("course")
       .skip((page - 1) * pageSize)
       .limit(pageSize)

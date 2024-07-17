@@ -13,22 +13,30 @@ import {
  * @param {Object} res - The response object.
  * @returns {Object} The response object with the retrieved courses.
  */
-const getCourses = (req, res) => {
+const getCourses = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
-    Course.find()
+    const courses = await Course.find()
       .populate("lessons")
       .populate("madeBy", "name")
       .populate("enrolledBy", "name") // Populate enrolledBy if needed
       .skip((page - 1) * pageSize)
       .limit(pageSize)
-      .then((result) => {
-        return res.status(200).json(result);
-      });
+      .exec();
+
+    const totalCourses = await Course.countDocuments();
+
+    res.status(200).json({
+      message: "Courses retrieved successfully",
+      courses,
+      totalPages: Math.ceil(totalCourses / pageSize),
+      currentPage: page,
+    });
   } catch (error) {
-    return res.status(500).json({ message: error.message });
+    console.error("Error retrieving courses:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 
