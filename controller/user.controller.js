@@ -437,6 +437,13 @@ const followUser = async (req, res) => {
   const followerId = req.user._id;
 
   try {
+    // Check if the user is trying to follow themselves
+    if (userId === followerId.toString()) {
+      return res
+        .status(400)
+        .json({ message: "Users cannot follow themselves" });
+    }
+
     // Check if the user exists
     const user = await User.findById(userId);
     if (!user) {
@@ -456,10 +463,12 @@ const followUser = async (req, res) => {
 
     // Update the user's followers
     user.followers.push(followerId);
+    user.followersCount += 1;
     await user.save();
 
     // Update the follower's following
     follower.following.push(userId);
+    follower.followingCount += 1;
     await follower.save();
 
     return res.status(200).json({
@@ -496,10 +505,12 @@ const unfollowUser = async (req, res) => {
 
     // Update the user's followers
     user.followers = user.followers.filter((id) => id !== followerId);
+    user.followersCount -= 1;
     await user.save();
 
     // Update the follower's following
     follower.following = follower.following.filter((id) => id !== userId);
+    follower.followingCount -= 1;
     await follower.save();
 
     return res.status(200).json({

@@ -42,6 +42,16 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       }
     ],
+
+    followersCount: {
+      type: Number,
+      default: 0,
+    },
+
+    followingCount: {
+      type: Number,
+      default: 0,
+    },
     bio: {
       type: String,
     },
