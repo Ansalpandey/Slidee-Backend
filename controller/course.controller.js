@@ -67,11 +67,11 @@ const getCourses = async (req, res) => {
  * @returns {Object} The response object.
  */
 const createCourse = async (req, res) => {
-  const { name, description, fee, rating, madeBy, thumbnailBase64 } = req.body;
+  const { name, description, fee, rating, thumbnailBase64 } = req.body;
 
   try {
     // Validate input
-    if (!name || !description || !fee || !rating || !madeBy) {
+    if (!name || !description || !fee || !rating) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -91,6 +91,9 @@ const createCourse = async (req, res) => {
     if (thumbnailBase64) {
       thumbnail = await uploadBase64Image(thumbnailBase64);
     }
+
+    // Extract user ID from the token
+    const madeBy = req.user._id;
 
     // Create a new course instance
     course = new Course({
@@ -242,6 +245,13 @@ const enrollCourse = async (req, res) => {
 
     if (!user || !course) {
       return res.status(404).json({ message: "User or Course not found" });
+    }
+
+    // Check if the user who made the course is trying to enroll
+    if (course.madeBy.toString() === userId) {
+      return res.status(400).json({
+        message: "The user who created the course cannot enroll in it",
+      });
     }
 
     if (user.enrolledCourses.includes(courseId)) {

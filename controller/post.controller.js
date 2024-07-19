@@ -98,11 +98,19 @@ const createPost = async (req, res) => {
       createdBy: new mongoose.Types.ObjectId(createdBy),
     });
 
-    await post.save();
+    // Save the post to the database
+    const savedPost = await post.save();
+
+    // Update the user's posts array
+    await User.findByIdAndUpdate(
+      createdBy,
+      { $push: { posts: savedPost._id } },
+      { new: true } // Return the updated document
+    );
 
     res.status(201).json({
       message: "Post created successfully",
-      post,
+      post: savedPost,
     });
   } catch (error) {
     console.error("Error in createPost function:", error);
@@ -239,7 +247,9 @@ const unlikePost = async (req, res) => {
     }
 
     post.likes -= 1;
-    post.likedBy = post.likedBy.filter((id) => id.toString() !== userId.toString());
+    post.likedBy = post.likedBy.filter(
+      (id) => id.toString() !== userId.toString()
+    );
 
     await post.save();
 
@@ -272,4 +282,13 @@ const getPostLikes = async (req, res) => {
   }
 };
 
-export { getPosts, getPost, createPost, updatePost, deletePost, likePost, unlikePost, getPostLikes };
+export {
+  getPosts,
+  getPost,
+  createPost,
+  updatePost,
+  deletePost,
+  likePost,
+  unlikePost,
+  getPostLikes,
+};

@@ -83,6 +83,7 @@ const getUserPosts = async (req, res) => {
 
 const getMyProfile = async (req, res) => {
   try {
+    // Find the user by ID and populate the posts field
     const user = await User.findById(req.user._id)
       .populate({
         path: "courses",
@@ -91,9 +92,22 @@ const getMyProfile = async (req, res) => {
           select: "name username",
         },
       })
-      .populate("enrolledCourses")
-      .populate("posts")
-      ;
+      .populate({
+        path: "enrolledCourses",
+        populate: {
+          path: "madeBy",
+          select: "name username",
+          path: "enrolledBy",
+          select: "name username",
+        },
+      })
+      .populate({
+        path: "posts",
+        populate: {
+          path: "createdBy",
+          select: "name username profileImage",
+        },
+      });
 
     if (!user) {
       return res.status(404).json({
@@ -112,7 +126,6 @@ const getMyProfile = async (req, res) => {
     });
   }
 };
-
 /**
  * Creates a new user.
  *
@@ -347,6 +360,7 @@ const getUserCourses = async (req, res) => {
 
   try {
     const userId = req.user._id;
+    console.log("User ID from token:", userId); // Log the user ID for debugging
 
     const user = await User.findById(userId);
     if (!user) {
@@ -358,6 +372,12 @@ const getUserCourses = async (req, res) => {
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
+
+    if (courses.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No courses found for this user" });
+    }
 
     const totalCourses = await Course.countDocuments({ madeBy: userId });
 

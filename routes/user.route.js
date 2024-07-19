@@ -25,10 +25,7 @@ router.get("/", auth, (req, res) => {
 });
 
 router.route("/register").post(
-  upload.fields({
-    name: "profileImage",
-    maxCount: 1,
-  }),
+  upload.single("profileImage"),
   (req, res) => {
     createUser(req, res);
   }
