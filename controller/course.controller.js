@@ -20,7 +20,7 @@ const getCourses = async (req, res) => {
   try {
     const courses = await Course.find()
       .populate("lessons")
-      .populate("madeBy", "name")
+      .populate("madeBy", "name username")
       .populate("enrolledBy", "name") // Populate enrolledBy if needed
       .skip((page - 1) * pageSize)
       .limit(pageSize)

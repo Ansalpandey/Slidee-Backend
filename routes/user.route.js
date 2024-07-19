@@ -25,16 +25,10 @@ router.get("/", auth, (req, res) => {
 });
 
 router.route("/register").post(
-  upload.fields([
-    {
-      name: "profileImage",
-      maxCount: 1,
-    },
-    {
-      name: "coverImage",
-      maxCount: 1,
-    },
-  ]),
+  upload.fields({
+    name: "profileImage",
+    maxCount: 1,
+  }),
   (req, res) => {
     createUser(req, res);
   }
@@ -60,7 +54,7 @@ router.post("/logout", auth, (req, res) => {
   logoutUser(req, res);
 });
 
-router.get("/courses/:id", auth, (req, res) => {
+router.get("/courses", auth, (req, res) => {
   getUserCourses(req, res);
 });
 

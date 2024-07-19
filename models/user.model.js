@@ -55,6 +55,12 @@ const userSchema = new mongoose.Schema(
     bio: {
       type: String,
     },
+    posts: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Post"
+      }
+    ],
     courses: [
       {
         type: mongoose.Types.ObjectId,

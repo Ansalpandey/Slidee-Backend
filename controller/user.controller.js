@@ -84,8 +84,16 @@ const getUserPosts = async (req, res) => {
 const getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
-      .populate("courses")
-      .populate("enrolledCourses");
+      .populate({
+        path: "courses",
+        populate: {
+          path: "madeBy",
+          select: "name username",
+        },
+      })
+      .populate("enrolledCourses")
+      .populate("posts")
+      ;
 
     if (!user) {
       return res.status(404).json({
@@ -114,16 +122,8 @@ const getMyProfile = async (req, res) => {
  * @throws {Error} If there is an error during the user creation process.
  */
 const createUser = async (req, res) => {
-  const {
-    name,
-    email,
-    password,
-    age,
-    username,
-    bio,
-    profileImageBase64,
-    coverImageBase64,
-  } = req.body;
+  const { name, email, password, age, username, bio, profileImageBase64 } =
+    req.body;
 
   try {
     // Validate input
@@ -139,26 +139,15 @@ const createUser = async (req, res) => {
 
     // Initialize profileImage and coverImage with default values
     let profileImage = { url: "" };
-    let coverImage = { url: "" };
 
     // Upload the profile picture if it is provided
     if (profileImageBase64) {
       profileImage = await uploadBase64Image(profileImageBase64);
     }
 
-    // Upload the cover image if it is provided
-    if (coverImageBase64) {
-      coverImage = await uploadBase64Image(coverImageBase64);
-    }
-
     // Upload the profile picture if it is provided
     if (req.files && req.files.profileImage && req.files.profileImage[0]) {
       profileImage = await uploadOnCloudinary(req.files.profileImage[0].path);
-    }
-
-    // Upload the cover image if it is provided
-    if (req.files && req.files.coverImage && req.files.coverImage[0]) {
-      coverImage = await uploadOnCloudinary(req.files.coverImage[0].path);
     }
 
     // Create a new user instance
@@ -170,7 +159,6 @@ const createUser = async (req, res) => {
       bio,
       password,
       profileImage: profileImage.url,
-      coverImage: coverImage.url,
     });
     // Save the user to the database
     const result = await user.save();
@@ -183,7 +171,6 @@ const createUser = async (req, res) => {
         age: result.age,
         username: result.username,
         profileImage: result.profileImage,
-        coverImage: result.coverImage,
         bio: result.bio,
       },
     });
@@ -241,7 +228,6 @@ const loginUser = async (req, res) => {
         age: user.age,
         username: user.username,
         profileImage: user.profileImage,
-        coverImage: user.coverImage,
         bio: user.bio,
         enrolledCourses: user.enrolledCourses,
       },
@@ -367,13 +353,13 @@ const getUserCourses = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const courses = await Course.find({ createdBy: userId })
-      .populate("createdBy", "username email")
+    const courses = await Course.find({ madeBy: userId })
+      .populate("madeBy", "name username")
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
-    const totalCourses = await Course.countDocuments({ createdBy: userId });
+    const totalCourses = await Course.countDocuments({ madeBy: userId });
 
     res.status(200).json({
       message: "Courses retrieved successfully",
