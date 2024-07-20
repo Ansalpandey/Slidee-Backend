@@ -22,6 +22,7 @@ const getCourses = async (req, res) => {
       .populate("lessons")
       .populate("madeBy", "name username")
       .populate("enrolledBy", "name") // Populate enrolledBy if needed
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
@@ -39,6 +40,7 @@ const getCourses = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 /**
  * Create a new course.
