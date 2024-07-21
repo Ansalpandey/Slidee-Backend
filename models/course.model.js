@@ -34,10 +34,10 @@ const courseSchema = new Schema(
     thumbnail: {
       type: String,
     },
-    enrolledBy: {
-      type: [Schema.Types.ObjectId],
+    enrolledBy: [{
+      type: Schema.Types.ObjectId,
       ref: "User",
-    },
+    }],
     rating: {
       type: Number,
       default: 0.0, // Default value

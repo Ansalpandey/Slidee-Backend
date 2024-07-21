@@ -21,7 +21,7 @@ const getCourses = async (req, res) => {
     const courses = await Course.find()
       .populate("lessons")
       .populate("madeBy", "name username")
-      .populate("enrolledBy", "name") // Populate enrolledBy if needed
+      .populate("enrolledBy", "name, username") // Populate enrolledBy if needed
       .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .skip((page - 1) * pageSize)
       .limit(pageSize)

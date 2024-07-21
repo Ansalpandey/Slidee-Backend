@@ -83,26 +83,37 @@ const getUserPosts = async (req, res) => {
 
 const getMyProfile = async (req, res) => {
   try {
-    // Find the user by ID and populate the posts field
+    // Find the user by ID and populate the relevant fields
     const user = await User.findById(req.user._id)
       .populate({
         path: "courses",
-        populate: {
-          path: "madeBy",
-          select: "name username",
-        },
+        populate: [
+          {
+            path: "madeBy",
+            select: "name username",
+          },
+          {
+            path: "enrolledBy",
+            select: "name username",
+          },
+        ],
       })
       .populate({
         path: "enrolledCourses",
-        populate: {
-          path: "madeBy",
-          select: "name username",
-          path: "enrolledBy",
-          select: "name username",
-        },
+        populate: [
+          {
+            path: "madeBy",
+            select: "name username",
+          },
+          {
+            path: "enrolledBy",
+            select: "name username",
+          },
+        ],
       })
       .populate({
         path: "posts",
+        options: { sort: { createdAt: -1 } }, // Sort posts by creation date in descending order
         populate: {
           path: "createdBy",
           select: "name username profileImage",
@@ -126,6 +137,7 @@ const getMyProfile = async (req, res) => {
     });
   }
 };
+
 /**
  * Creates a new user.
  *
