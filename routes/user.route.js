@@ -12,9 +12,10 @@ import {
   getMyProfile,
   refreshToken,
   getUserPosts,
+  isFollowing,
   followUser,
-  unfollowUser,
   getFollowers,
+  getOtherUserProfile,
   getFollowings,
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
@@ -61,6 +62,10 @@ router.get("/profile", auth, (req, res) => {
   getMyProfile(req, res);
 });
 
+router.get("/profile/:id", auth, (req, res) => {
+  getOtherUserProfile(req, res);
+});
+
 router.post("/refresh-token", auth, (req, res) => {
   refreshToken(req, res);
 });
@@ -73,12 +78,12 @@ router.post("/follow/:id", auth, (req, res) => {
   followUser(req, res);
 });
 
-router.post("/unfollow/:id", auth, (req, res) => {
-  unfollowUser(req, res);
-});
-
 router.get("/followers/:id", auth, (req, res) => {
   getFollowers(req, res);
+});
+
+router.get("/is-following/:id", auth, (req, res) => {
+  isFollowing(req, res);
 });
 
 router.get("/followings/:id", auth, (req, res) => {
