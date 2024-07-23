@@ -73,6 +73,70 @@ const getUserPosts = async (req, res) => {
   }
 };
 
+const getUsersBookmarkedPosts = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const posts = await Post.find({ bookmarkedBy: userId })
+      .populate("createdBy", "name username email profileImage")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    const totalPosts = await Post.countDocuments({ bookmarkedBy: userId });
+
+    res.status(200).json({
+      message: "Posts retrieved successfully",
+      posts,
+      totalPages: Math.ceil(totalPosts / pageSize),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving posts:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getUsersBookmarkedCourses = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const courses = await Course.find({ bookmarkedBy: userId })
+      .populate("madeBy", "name username email profileImage")
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
+
+    const totalCourses = await Course.countDocuments({ bookmarkedBy: userId });
+
+    res.status(200).json({
+      message: "Courses retrieved successfully",
+      courses,
+      totalPages: Math.ceil(totalCourses / pageSize),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving courses:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 /**
  * Retrieves the profile of the authenticated user.
  *
