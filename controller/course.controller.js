@@ -232,6 +232,40 @@ const getCourseById = async (req, res) => {
   }
 };
 
+const bookmarkCourse = async (req, res) => {
+  const userId = req.user._id;
+  const courseId = req.params.id;
+
+  try {
+    // Check if the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the course exists
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    // Check if the course is already bookmarked
+    if (user.bookmarkedCourses.includes(courseId)) {
+      return res.status(400).json({ message: "Course is already bookmarked by the user" });
+    }
+
+    // Add course to bookmarked courses
+    user.bookmarkedCourses.push(courseId);
+    await user.save();
+
+    res.status(200).json({ message: "Course bookmarked successfully" });
+  } catch (error) {
+    console.error("Error bookmarking course:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 const enrollCourse = async (req, res) => {
   const { userId, courseId } = req.body;
 
@@ -324,4 +358,5 @@ export {
   getCourseById,
   enrollCourse,
   unEnrollCourse,
+  bookmarkCourse
 };

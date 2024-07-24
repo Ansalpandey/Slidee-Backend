@@ -119,6 +119,40 @@ const createPost = async (req, res) => {
   }
 };
 
+
+const bookmarkedPost = async (req, res) => {
+  const userId = req.user ? req.user._id : null;
+  const postId = req.params.id;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    // Check if the post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Check if the post is already bookmarked
+    if (post.bookmarkedBy && post.bookmarkedBy.includes(userId)) {
+      return res.status(400).json({ message: "Post already bookmarked" });
+    }
+
+    // Add user to bookmarkedBy array in the post
+    post.bookmarkedBy = post.bookmarkedBy || [];
+    post.bookmarkedBy.push(userId);
+    await post.save();
+
+    res.status(200).json({ message: "Post bookmarked successfully" });
+  } catch (error) {
+    console.error("Error bookmarking post:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 const updatePost = async (req, res) => {
   const { id } = req.params;
   const { content, imageUrlBase64 } = req.body;
@@ -292,4 +326,5 @@ export {
   likePost,
   unlikePost,
   getPostLikes,
+  bookmarkedPost
 };

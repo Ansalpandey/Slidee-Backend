@@ -1,7 +1,7 @@
 import express from "express";
 const router = express.Router();
 
-import { getPosts, getPost, createPost, updatePost, deletePost, likePost, unlikePost, getPostLikes } from "../controller/post.controller.js";
+import { getPosts, getPost, createPost, updatePost, deletePost, likePost, unlikePost, getPostLikes, bookmarkedPost } from "../controller/post.controller.js";
 
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -41,6 +41,10 @@ router.post("/:id/unlike", (req, res) => {
 
 router.get("/:id/likes", (req, res) => {
   getPostLikes(req, res);
+});
+
+router.post("/:id/bookmark", (req, res) => {
+  bookmarkedPost(req, res);
 });
 
 export default router;

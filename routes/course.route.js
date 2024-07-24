@@ -9,6 +9,7 @@ import {
   getCourseById,
   enrollCourse,
   unEnrollCourse,
+  bookmarkCourse
 } from "../controller/course.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -49,6 +50,10 @@ router.post("/enroll", (req, res) => {
 
 router.post("/unenroll", (req, res) => {
   unEnrollCourse(req, res);
+});
+
+router.post("/bookmark", (req, res) => {
+  bookmarkCourse(req, res);
 });
 
 export default router;

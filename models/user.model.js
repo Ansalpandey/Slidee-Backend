@@ -68,6 +68,20 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
+    bookmarkedCourses: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Course",
+      },
+    ],
+
+    bookmarkedPosts: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Post",
+      },
+    ],
+
     age: {
       type: Number,
       required: true,
