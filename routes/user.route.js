@@ -17,6 +17,7 @@ import {
   getFollowers,
   getOtherUserProfile,
   getFollowings,
+  editProfile,
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -25,14 +26,11 @@ router.get("/", auth, (req, res) => {
   getUsers(req, res);
 });
 
-router.route("/register").post(
-  upload.fields([
-    { name: "profileImage", maxCount: 1 },
-  ]),
-  (req, res) => {
+router
+  .route("/register")
+  .post(upload.fields([{ name: "profileImage", maxCount: 1 }]), (req, res) => {
     createUser(req, res);
-  }
-);
+  });
 
 router.post("/login", (req, res) => {
   loginUser(req, res);
@@ -89,5 +87,14 @@ router.get("/is-following/:id", auth, (req, res) => {
 router.get("/followings/:id", auth, (req, res) => {
   getFollowings(req, res);
 });
+
+router.put(
+  "/edit-profile/:id",
+  upload.fields([{ name: "profileImage", maxCount: 1 }]),
+  auth,
+  (req, res) => {
+    editProfile(req, res);
+  }
+);
 
 export default router;

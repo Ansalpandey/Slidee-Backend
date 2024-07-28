@@ -203,6 +203,51 @@ const getMyProfile = async (req, res) => {
   }
 };
 
+const editProfile = async (req, res) => {
+  try {
+    // Find the user by ID
+    const userId = req.params.id;
+    const user = await User.findById(userId)
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Extract data from request body
+    const { name, email, location, bio, age } = req.body;
+
+    // Handle profile image upload if provided
+    let profileImage;
+    if (req.files && req.files.profileImage && req.files.profileImage[0]) {
+      profileImage = await uploadOnCloudinary(req.files.profileImage[0].path);
+    }
+
+    // Update the user's profile with the new data
+    if (name) user.name = name;
+    if (email) user.email = email;
+    if (profileImage && profileImage.url) user.profileImage = profileImage.url;
+    if (location) user.location = location;
+    if (bio) user.bio = bio;
+    if (age) user.age = age;
+
+    // Save the updated user profile
+    await user.save();
+
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+
 const getOtherUserProfile = async (req, res) => {
   try {
     // Find the user by ID and populate the relevant fields
@@ -735,5 +780,6 @@ export {
   getFollowers,
   getFollowings,
   getOtherUserProfile,
-  isFollowing
+  isFollowing,
+  editProfile
 };
