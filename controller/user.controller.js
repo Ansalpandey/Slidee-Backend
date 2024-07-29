@@ -176,6 +176,8 @@ const getMyProfile = async (req, res) => {
           },
         ],
       })
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage")
       .populate({
         path: "posts",
         options: { sort: { createdAt: -1 } }, // Sort posts by creation date in descending order
@@ -207,7 +209,7 @@ const editProfile = async (req, res) => {
   try {
     // Find the user by ID
     const userId = req.params.id;
-    const user = await User.findById(userId)
+    const user = await User.findById(userId);
 
     if (!user) {
       return res.status(404).json({
@@ -247,7 +249,6 @@ const editProfile = async (req, res) => {
   }
 };
 
-
 const getOtherUserProfile = async (req, res) => {
   try {
     // Find the user by ID and populate the relevant fields
@@ -267,6 +268,8 @@ const getOtherUserProfile = async (req, res) => {
           },
         ],
       })
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage")
       .populate({
         path: "enrolledCourses",
         populate: [
@@ -656,6 +659,12 @@ const followUser = async (req, res) => {
 
       return res.status(200).json({
         message: "User unfollowed successfully",
+        follower: {
+          id: follower._id,
+          name: follower.name,
+          username: follower.username,
+          profileImage: follower.profileImage,
+        },
       });
     } else {
       // Follow the user
@@ -669,6 +678,12 @@ const followUser = async (req, res) => {
 
       return res.status(200).json({
         message: "User followed successfully",
+        follower: {
+          id: follower._id,
+          name: follower.name,
+          username: follower.username,
+          profileImage: follower.profileImage,
+        },
       });
     }
   } catch (error) {
@@ -756,7 +771,7 @@ const isFollowing = async (req, res) => {
 
     return res.status(200).json({
       message: "User following status retrieved successfully",
-      isFollowing
+      isFollowing,
     });
   } catch (error) {
     console.error("Error checking if user is following:", error);
@@ -781,5 +796,5 @@ export {
   getFollowings,
   getOtherUserProfile,
   isFollowing,
-  editProfile
+  editProfile,
 };
