@@ -2,12 +2,13 @@ import express from "express";
 import dotenv from "dotenv";
 dotenv.config();
 import cookieParser from "cookie-parser";
+import bodyParser from "body-parser";
 import { connectDB } from "./db/db.js";
 const app = express();
 
 //Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+app.use(bodyParser.json({limit: '50mb'}));
 app.use(cookieParser());
 
 app.use((req, res, next) => {

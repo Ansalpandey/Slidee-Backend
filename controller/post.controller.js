@@ -64,38 +64,48 @@ const createPost = async (req, res) => {
   }
 
   try {
-    // Initialize imageUrl and videoUrl with default values
-    let imageUrl = { url: "" };
-    let videoUrl = { url: "" };
+    let imageUrl = [];
+    let videoUrl = "";
+
+    // Ensure imageUrlBase64 is an array
+    const imageBase64Array = Array.isArray(imageUrlBase64) ? imageUrlBase64 : [imageUrlBase64];
 
     // Upload the postImage if it is provided
     if (imageUrlBase64) {
-      imageUrl = await uploadBase64Image(imageUrlBase64);
-    } else if (
-      req.files &&
-      req.files.imageUrl &&
-      req.files.imageUrl.length > 0
-    ) {
+      const imageUrls = await Promise.all(
+        imageBase64Array.map(async (base64) => {
+          const result = await uploadBase64Image(base64);
+          return result.url;
+        })
+      );
+      imageUrl = imageUrls;
+    } else if (req.files && req.files.imageUrl && req.files.imageUrl.length > 0) {
       const imageFiles = req.files.imageUrl;
-      imageUrl = await uploadOnCloudinary(imageFiles[0].path);
+      const imageUrls = await Promise.all(
+        imageFiles.map(async (file) => {
+          const result = await uploadOnCloudinary(file.path);
+          return result.url;
+        })
+      );
+      imageUrl = imageUrls;
     }
 
     // Upload video if it is provided
     if (req.files && req.files.videoUrl && req.files.videoUrl.length > 0) {
       const videoFiles = req.files.videoUrl;
       const video = videoFiles[0];
-      videoUrl = await uploadVideoOnCloudinary(video.path);
+      const videoResult = await uploadVideoOnCloudinary(video.path);
+      videoUrl = videoResult.url;
 
-      // Ensure videoUrl has a valid url property
-      if (!videoUrl || !videoUrl.url || videoUrl.url.trim() === "") {
+      if (!videoUrl || videoUrl.trim() === "") {
         return res.status(500).json({ message: "Failed to upload video" });
       }
     }
 
     const post = new Post({
       content,
-      imageUrl: imageUrl.url,
-      videoUrl: videoUrl.url,
+      imageUrl,
+      videoUrl,
       createdBy: new mongoose.Types.ObjectId(createdBy),
     });
 
@@ -106,7 +116,7 @@ const createPost = async (req, res) => {
     await User.findByIdAndUpdate(
       createdBy,
       { $push: { posts: savedPost._id } },
-      { new: true } // Return the updated document
+      { new: true }
     );
 
     res.status(201).json({

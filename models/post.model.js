@@ -7,9 +7,11 @@ const postSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    imageUrl: {
-      type: String,
-    },
+    imageUrl: [
+      {
+        type: String,
+      },
+    ],
     videoUrl: {
       type: String,
     },
