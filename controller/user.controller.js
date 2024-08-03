@@ -218,19 +218,24 @@ const editProfile = async (req, res) => {
     }
 
     // Extract data from request body
-    const { name, email, location, bio, age } = req.body;
+    const { name, email, bio, age, profileImageBase64 } = req.body;
 
-    // Handle profile image upload if provided
-    let profileImage;
+    // Initialize profileImage and coverImage with default values
+    let profileImage = { url: "" };
+
+    // Upload the profile picture if it is provided
+    if (profileImageBase64) {
+      profileImage = await uploadBase64Image(profileImageBase64);
+    }
+
+    // Upload the profile picture if it is provided
     if (req.files && req.files.profileImage && req.files.profileImage[0]) {
       profileImage = await uploadOnCloudinary(req.files.profileImage[0].path);
     }
-
     // Update the user's profile with the new data
     if (name) user.name = name;
     if (email) user.email = email;
     if (profileImage && profileImage.url) user.profileImage = profileImage.url;
-    if (location) user.location = location;
     if (bio) user.bio = bio;
     if (age) user.age = age;
 
