@@ -218,7 +218,7 @@ const editProfile = async (req, res) => {
     }
 
     // Extract data from request body
-    const { name, email, bio, age, profileImageBase64 } = req.body;
+    const { name, email, bio, age, profileImageBase64, username, location } = req.body;
 
     // Initialize profileImage and coverImage with default values
     let profileImage = { url: "" };
@@ -238,6 +238,8 @@ const editProfile = async (req, res) => {
     if (profileImage && profileImage.url) user.profileImage = profileImage.url;
     if (bio) user.bio = bio;
     if (age) user.age = age;
+    if (username) user.username = username;
+    if (location) user.location = location;
 
     // Save the updated user profile
     await user.save();
@@ -323,12 +325,12 @@ const getOtherUserProfile = async (req, res) => {
  * @throws {Error} If there is an error during the user creation process.
  */
 const createUser = async (req, res) => {
-  const { name, email, password, age, username, bio, profileImageBase64 } =
+  const { name, email, password, age, username, bio, profileImageBase64, location } =
     req.body;
 
   try {
     // Validate input
-    if (!name || !email || !password || !age || !username || !bio) {
+    if (!name || !email || !password || !age || !username || !bio, !location) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -359,6 +361,7 @@ const createUser = async (req, res) => {
       username,
       bio,
       password,
+      location,
       profileImage: profileImage.url,
     });
     // Save the user to the database
@@ -373,6 +376,7 @@ const createUser = async (req, res) => {
         username: result.username,
         profileImage: result.profileImage,
         bio: result.bio,
+        location: result.location,
       },
     });
   } catch (error) {
