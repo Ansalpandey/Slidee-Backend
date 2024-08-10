@@ -481,7 +481,7 @@ const loginUser = async (req, res) => {
 
     // Sign the JWT token
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1m",
+      expiresIn: "1d",
     });
 
     res.status(200).json({
@@ -691,7 +691,7 @@ const refreshToken = (req, res) => {
     };
 
     const newToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1m", // Set expiration time as needed
+      expiresIn: "15d", // Set expiration time as needed
     });
 
     console.log("New Token:", newToken);
