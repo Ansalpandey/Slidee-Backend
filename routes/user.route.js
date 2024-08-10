@@ -18,6 +18,7 @@ import {
   getOtherUserProfile,
   getFollowings,
   editProfile,
+  searchUsers
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -64,7 +65,7 @@ router.get("/profile/:id", auth, (req, res) => {
   getOtherUserProfile(req, res);
 });
 
-router.post("/refresh-token", auth, (req, res) => {
+router.get("/refresh-token", (req, res) => {
   refreshToken(req, res);
 });
 
@@ -86,6 +87,10 @@ router.get("/is-following/:id", auth, (req, res) => {
 
 router.get("/followings/:id", auth, (req, res) => {
   getFollowings(req, res);
+});
+
+router.get("/search", auth, (req, res) => {
+  searchUsers(req, res);
 });
 
 router.put(

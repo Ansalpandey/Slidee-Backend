@@ -14,6 +14,7 @@ const getPosts = async (req, res) => {
   try {
     const posts = await Post.find()
       .populate("createdBy", "name username email profileImage") // Ensure 'username', 'email', and 'profileImage' are valid fields in User schema
+      .populate("comments", "content")
       .sort({ createdAt: -1 }) // Sort by createdAt in descending order
       .skip((page - 1) * pageSize)
       .limit(pageSize)

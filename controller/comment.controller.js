@@ -27,6 +27,7 @@ const createComment = async (req, res) => {
     const comment = new Comment({
       content,
       createdBy: userId,
+      postId: id,
     });
 
     await comment.save();

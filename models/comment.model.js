@@ -10,7 +10,6 @@ const commentSchema = new mongoose.Schema(
     postId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
-      required: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

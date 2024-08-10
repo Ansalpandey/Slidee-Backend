@@ -41,6 +41,42 @@ const getUsers = async (req, res) => {
   }
 };
 
+const searchUsers = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+  const query = req.query.q || ""; // Extract query from the 'q' query parameter
+
+  try {
+    const users = await User.find({
+      $or: [
+        { name: { $regex: `^${query}`, $options: "i" } }, // Match names starting with the query
+        { username: { $regex: `^${query}`, $options: "i" } }, // Match usernames starting with the query
+      ],
+    })
+      .populate("courses") // Populate the 'courses' field with related data
+      .skip((page - 1) * pageSize) // Pagination: Skip the previous pages
+      .limit(pageSize) // Pagination: Limit the results to the specified page size
+      .exec();
+
+    const totalUsers = await User.countDocuments({
+      $or: [
+        { name: { $regex: `^${query}`, $options: "i" } }, // Count documents that match the search criteria
+        { username: { $regex: `^${query}`, $options: "i" } },
+      ],
+    });
+
+    res.status(200).json({
+      message: "Users retrieved successfully",
+      users,
+      totalPages: Math.ceil(totalUsers / pageSize),
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving users:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getUserPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
@@ -55,6 +91,20 @@ const getUserPosts = async (req, res) => {
 
     const posts = await Post.find({ createdBy: userId })
       .populate("createdBy", "name username email profileImage")
+      .populate({
+        path: "comments",
+        options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
+        populate: [
+          {
+            path: "createdBy",
+            select: "name username profileImage",
+          },
+          {
+            path: "content",
+            select: "content",
+          },
+        ],
+      })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
@@ -218,7 +268,8 @@ const editProfile = async (req, res) => {
     }
 
     // Extract data from request body
-    const { name, email, bio, age, profileImageBase64, username, location } = req.body;
+    const { name, email, bio, age, profileImageBase64, username, location } =
+      req.body;
 
     // Initialize profileImage and coverImage with default values
     let profileImage = { url: "" };
@@ -325,12 +376,22 @@ const getOtherUserProfile = async (req, res) => {
  * @throws {Error} If there is an error during the user creation process.
  */
 const createUser = async (req, res) => {
-  const { name, email, password, age, username, bio, profileImageBase64, location } =
-    req.body;
+  const {
+    name,
+    email,
+    password,
+    age,
+    username,
+    bio,
+    profileImageBase64,
+    location,
+  } = req.body;
 
   try {
     // Validate input
-    if (!name || !email || !password || !age || !username || !bio, !location) {
+    if (
+      (!name || !email || !password || !age || !username || !bio, !location)
+    ) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -420,7 +481,7 @@ const loginUser = async (req, res) => {
 
     // Sign the JWT token
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: "1m",
     });
 
     res.status(200).json({
@@ -600,28 +661,40 @@ const logoutUser = (req, res) => {
 };
 
 const refreshToken = (req, res) => {
-  const token = req.headers.authorization.split(" ")[1];
-
-  if (!token) {
+  // Ensure the Authorization header is present
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
     return res.status(401).json({ message: "Unauthorized" });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+  // Extract the token from the Authorization header
+  const token = authHeader.split(" ")[1];
+
+  // Verify and decode the token
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if (err) {
+      console.log("Token verification failed:", err.message);
       return res.status(403).json({ message: "Forbidden" });
     }
 
+    // Log the decoded payload for debugging
+    console.log("Token verified successfully. Decoded payload:", decoded);
+;
+
+    // Create a new token with the same user details
     const payload = {
       user: {
-        id: user.id,
-        email: user.email,
-        username: user.username,
+        id: decoded.user.id,
+        email: decoded.user.email,
+        username: decoded.user.username
       },
     };
 
     const newToken = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: "1m", // Set expiration time as needed
     });
+
+    console.log("New Token:", newToken);
 
     return res.status(200).json({
       message: "Token refreshed successfully!",
@@ -806,4 +879,5 @@ export {
   getOtherUserProfile,
   isFollowing,
   editProfile,
+  searchUsers,
 };
