@@ -481,7 +481,7 @@ const loginUser = async (req, res) => {
 
     // Sign the JWT token
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: "1d",
+      expiresIn: "15d",
     });
 
     res.status(200).json({
@@ -569,7 +569,7 @@ const forgetPassword = (req, res) => {
     jwt.sign(
       payload,
       process.env.JWT_SECRET,
-      { expiresIn: "1d" },
+      { expiresIn: "15d" },
       (err, token) => {
         if (err) throw err;
 
