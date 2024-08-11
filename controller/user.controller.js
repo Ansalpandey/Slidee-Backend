@@ -53,6 +53,7 @@ const searchUsers = async (req, res) => {
         { username: { $regex: `^${query}`, $options: "i" } }, // Match usernames starting with the query
       ],
     })
+      .select("-password") // Exclude the password field from the results
       .populate("courses") // Populate the 'courses' field with related data
       .skip((page - 1) * pageSize) // Pagination: Skip the previous pages
       .limit(pageSize) // Pagination: Limit the results to the specified page size
@@ -679,14 +680,12 @@ const refreshToken = (req, res) => {
 
     // Log the decoded payload for debugging
     console.log("Token verified successfully. Decoded payload:", decoded);
-;
-
     // Create a new token with the same user details
     const payload = {
       user: {
         id: decoded.user.id,
         email: decoded.user.email,
-        username: decoded.user.username
+        username: decoded.user.username,
       },
     };
 
