@@ -786,7 +786,7 @@ const getFollowers = async (req, res) => {
     }
 
     const followers = await User.find({ _id: { $in: user.followers } })
-      .select("name username profileImage")
+      .select("name username profileImage bio")
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
