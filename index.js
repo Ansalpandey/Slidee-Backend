@@ -33,7 +33,7 @@ app.use("/api/v1/lessons/", lessonRouter);
 app.use("/api/v1/posts/", postRouter);
 app.use("/api/v1/posts/", commentRouter);
 
-//Server running
+// //Server running
 app.listen(process.env.PORT || 3000, () => {
   console.log("Server started");
 });
