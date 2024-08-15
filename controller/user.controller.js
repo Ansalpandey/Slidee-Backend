@@ -385,6 +385,7 @@ const createUser = async (req, res) => {
     username,
     bio,
     profileImageBase64,
+    location
   } = req.body;
 
   try {
@@ -422,6 +423,7 @@ const createUser = async (req, res) => {
       username,
       bio,
       password,
+      location : "",
       profileImage: profileImage.url,
     });
     // Save the user to the database
@@ -435,6 +437,7 @@ const createUser = async (req, res) => {
         age: result.age,
         username: result.username,
         profileImage: result.profileImage,
+        location: result.location,
         bio: result.bio,
       },
     });
