@@ -4,6 +4,8 @@ import { Post } from "../models/post.model.js";
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
 import {
   uploadOnCloudinary,
   uploadBase64Image,
@@ -385,14 +387,12 @@ const createUser = async (req, res) => {
     username,
     bio,
     profileImageBase64,
-    location
+    location,
   } = req.body;
 
   try {
     // Validate input
-    if (
-      (!name || !email || !password || !age || !username || !bio)
-    ) {
+    if (!name || !email || !password || !age || !username || !bio) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -423,7 +423,7 @@ const createUser = async (req, res) => {
       username,
       bio,
       password,
-      location : "",
+      location: "",
       profileImage: profileImage.url,
     });
     // Save the user to the database
@@ -544,45 +544,87 @@ const updateUser = (req, res) => {
   }
 };
 
-/**
- * Handles the forget password functionality.
- *
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
- * @returns {Object} The response object with a reset link sent to the user's email.
- */
-const forgetPassword = (req, res) => {
+const requestOTP = (req, res) => {
   const { email } = req.body;
 
   User.findOne({ email }).then((user) => {
     if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Generate a 6-digit OTP using the crypto package
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    // Store the OTP in the user's document
+    user.resetOtp = otp;
+    user.otpExpires = Date.now() + 15 * 60 * 1000; // 15 minutes expiry
+    user.save();
+
+    // Send the OTP to the user's email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: email,
+      subject: "Your OTP for Password Reset",
+      html: `<h2>Your OTP is ${otp}</h2><p>Please use this OTP to reset your password. It will expire in 15 minutes.</p>`,
+    };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log("Error sending email:", error);
+        return res.status(500).json({ message: "Error sending email" });
+      } else {
+        console.log("Email sent:", info.response);
+        return res.status(200).json({
+          message: "OTP sent to your email",
+        });
+      }
+    });
+  });
+};
+
+const verifyOTP = (req, res) => {
+  const { email, otp } = req.body;
+
+  User.findOne({ email }).then((user) => {
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if the OTP is correct and has not expired
+    if (user.resetOtp !== otp || user.otpExpires < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+  });
+};
+
+const forgetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
       return res.status(400).json({ message: "User not found" });
     }
 
-    // Create a JWT payload
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
-
-    // Sign the JWT token
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: "15d" },
-      (err, token) => {
-        if (err) throw err;
-
-        // Send the email with the reset link
-        const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
-        return res.status(200).json({
-          message: "Reset link sent to your email",
-          resetLink,
-        });
-      }
+    await User.findOneAndUpdate(
+      { email },
+      { password: newPassword },
+      { new: true }
     );
-  });
+
+    return res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "An error occurred", error });
+  }
 };
 
 /**
@@ -879,4 +921,8 @@ export {
   isFollowing,
   editProfile,
   searchUsers,
+  getUsersBookmarkedPosts,
+  getUsersBookmarkedCourses,
+  requestOTP,
+  verifyOTP,
 };

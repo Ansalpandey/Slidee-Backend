@@ -18,7 +18,11 @@ import {
   getOtherUserProfile,
   getFollowings,
   editProfile,
-  searchUsers
+  searchUsers,
+  getUsersBookmarkedPosts,
+  getUsersBookmarkedCourses,
+  requestOTP,
+  verifyOTP,
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -47,6 +51,22 @@ router.delete("/:id", auth, (req, res) => {
 
 router.post("/reset", (req, res) => {
   forgetPassword(req, res);
+});
+
+router.post("/request-otp", (req, res) => {
+  requestOTP(req, res);
+});
+
+router.post("/verify-otp", (req, res) => {
+  verifyOTP(req, res);
+});
+
+router.get("/bookmarked-posts", auth, (req, res) => {
+  getUsersBookmarkedPosts(req, res);
+});
+
+router.get("/bookmarked-courses", auth, (req, res) => {
+  getUsersBookmarkedCourses(req, res);
 });
 
 router.post("/logout", auth, (req, res) => {
