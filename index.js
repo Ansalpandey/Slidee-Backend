@@ -13,8 +13,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Middlewares
-app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
-app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
+app.use(bodyParser.json({ limit: "50mb" }));
 app.use(cookieParser());
 
 app.use((req, res, next) => {
@@ -26,19 +26,19 @@ app.use((req, res, next) => {
 connectDB(io);
 
 // WebSocket setup
-io.on('connection', (socket) => {
-  console.log('New WebSocket connection:', socket.id);
+io.on("connection", (socket) => {
+  console.log("New WebSocket connection:", socket.id);
 
   // Listen for specific events and handle them
-  socket.on('someEvent', (data) => {
-    console.log('Received someEvent:', data);
+  socket.on("someEvent", (data) => {
+    console.log("Received someEvent:", data);
     // Handle the event, e.g., broadcast updates
-    io.emit('update', { message: 'New data available', data });
+    io.emit("update", { message: "New data available", data });
   });
 
   // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('WebSocket disconnected:', socket.id);
+  socket.on("disconnect", () => {
+    console.log("WebSocket disconnected:", socket.id);
   });
 });
 
@@ -60,4 +60,3 @@ app.use("/api/v1/posts/", commentRouter);
 server.listen(process.env.PORT || 3000, () => {
   console.log("Server started");
 });
-

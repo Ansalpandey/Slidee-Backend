@@ -69,7 +69,9 @@ const createPost = async (req, res) => {
     let videoUrl = "";
 
     // Ensure imageUrlBase64 is an array
-    const imageBase64Array = Array.isArray(imageUrlBase64) ? imageUrlBase64 : [imageUrlBase64];
+    const imageBase64Array = Array.isArray(imageUrlBase64)
+      ? imageUrlBase64
+      : [imageUrlBase64];
 
     // Upload the postImage if it is provided
     if (imageUrlBase64) {
@@ -80,7 +82,11 @@ const createPost = async (req, res) => {
         })
       );
       imageUrl = imageUrls;
-    } else if (req.files && req.files.imageUrl && req.files.imageUrl.length > 0) {
+    } else if (
+      req.files &&
+      req.files.imageUrl &&
+      req.files.imageUrl.length > 0
+    ) {
       const imageFiles = req.files.imageUrl;
       const imageUrls = await Promise.all(
         imageFiles.map(async (file) => {
@@ -130,7 +136,6 @@ const createPost = async (req, res) => {
   }
 };
 
-
 const bookmarkedPost = async (req, res) => {
   const userId = req.user ? req.user._id : null;
   const postId = req.params.id;
@@ -162,7 +167,6 @@ const bookmarkedPost = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 
 const updatePost = async (req, res) => {
   const { id } = req.params;
@@ -281,29 +285,43 @@ const unlikePost = async (req, res) => {
     return res.status(401).json({ message: "User not authenticated" });
   }
 
-  try {
-    const post = await Post.findById(id);
+  let attempts = 0;
+  const maxAttempts = 3;
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+  while (attempts < maxAttempts) {
+    try {
+      const post = await Post.findById(id);
+
+      if (!post) {
+        return res.status(404).json({ message: "Post not found" });
+      }
+
+      if (!post.likedBy.includes(userId)) {
+        return res.status(400).json({ message: "Post not liked yet" });
+      }
+
+      post.likes -= 1;
+      post.likedBy = post.likedBy.filter(
+        (likedId) => likedId.toString() !== userId.toString()
+      );
+
+      await post.save();
+      return res.status(200).json({ message: "Post unliked successfully" });
+    } catch (error) {
+      if (error instanceof mongoose.Error.VersionError) {
+        attempts += 1;
+        console.log(`Version conflict detected. Retry attempt ${attempts}`);
+        continue;
+      }
+      console.error("Error unliking post:", error);
+      return res.status(500).json({ message: error.message });
     }
-
-    if (!post.likedBy.includes(userId)) {
-      return res.status(400).json({ message: "Post not liked yet" });
-    }
-
-    post.likes -= 1;
-    post.likedBy = post.likedBy.filter(
-      (id) => id.toString() !== userId.toString()
-    );
-
-    await post.save();
-
-    res.status(200).json({ message: "Post unliked successfully" });
-  } catch (error) {
-    console.error("Error unliking post:", error);
-    res.status(500).json({ message: error.message });
   }
+
+  return res.status(500).json({
+    message:
+      "Failed to unlike post after multiple attempts due to version conflicts.",
+  });
 };
 
 const getPostLikes = async (req, res) => {
@@ -337,5 +355,5 @@ export {
   likePost,
   unlikePost,
   getPostLikes,
-  bookmarkedPost
+  bookmarkedPost,
 };

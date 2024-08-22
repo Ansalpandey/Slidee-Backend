@@ -16,31 +16,44 @@ const connectDB = async (io) => {
       }
     );
     console.log("MongoDB connected successfully!");
-    const userCollection = mongoose.connection.collection('users');
-    const changeStream = userCollection.watch();
+    // Array of collection names to watch
+    const collectionsToWatch = [
+      "users",
+      "posts",
+      "lessons",
+      "courses",
+      "comments",
+    ];
 
-    changeStream.on('change', (change) => {
-      console.log("Change detected:", change);
+    collectionsToWatch.forEach((collectionName) => {
+      const collection = mongoose.connection.collection(collectionName);
+      const changeStream = collection.watch();
 
-      // Emit changes based on the operation type
-      switch (change.operationType) {
-        case 'insert':
-          io.emit('dbInsert', change.fullDocument);
-          break;
-        case 'update':
-          io.emit('dbUpdate', { 
-            id: change.documentKey._id, 
-            update: change.updateDescription 
-          });
-          break;
-        case 'delete':
-          io.emit('dbDelete', change.documentKey._id);
-          break;
-        default:
-          console.log("Unhandled change operation:", change.operationType);
-      }
+      changeStream.on("change", (change) => {
+        console.log(`Change detected in ${collectionName} collection:`, change);
+
+        // Emit changes based on the operation type
+        switch (change.operationType) {
+          case "insert":
+            io.emit(`${collectionName}Insert`, change.fullDocument);
+            break;
+          case "update":
+            io.emit(`${collectionName}Update`, {
+              id: change.documentKey._id,
+              update: change.updateDescription,
+            });
+            break;
+          case "delete":
+            io.emit(`${collectionName}Delete`, change.documentKey._id);
+            break;
+          default:
+            console.log(
+              `Unhandled change operation in ${collectionName} collection:`,
+              change.operationType
+            );
+        }
+      });
     });
-
   } catch (error) {
     console.log("Error connecting to MongoDB", error);
   }
