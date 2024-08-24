@@ -5,16 +5,16 @@ import bodyParser from "body-parser";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./db/db.js";
-
+// Start WebSocket server on a different port
+const wsServer = http.createServer();
+const io = new Server(wsServer);
 dotenv.config();
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
 
 // Middlewares
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
-app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "5gb", extended: true }));
+app.use(bodyParser.json({ limit: "5gb" }));
 app.use(cookieParser());
 
 app.use((req, res, next) => {
@@ -24,23 +24,6 @@ app.use((req, res, next) => {
 
 // Database connection
 connectDB(io);
-
-// WebSocket setup
-io.on("connection", (socket) => {
-  console.log("New WebSocket connection:", socket.id);
-
-  // Listen for specific events and handle them
-  socket.on("someEvent", (data) => {
-    console.log("Received someEvent:", data);
-    // Handle the event, e.g., broadcast updates
-    io.emit("update", { message: "New data available", data });
-  });
-
-  // Handle disconnection
-  socket.on("disconnect", () => {
-    console.log("WebSocket disconnected:", socket.id);
-  });
-});
 
 // Routes
 import userRouter from "./routes/user.route.js";
@@ -56,7 +39,24 @@ app.use("/api/v1/lessons/", lessonRouter);
 app.use("/api/v1/posts/", postRouter);
 app.use("/api/v1/posts/", commentRouter);
 
-// Start server
-server.listen(process.env.PORT || 3000, () => {
-  console.log("Server started");
+// Start HTTP server
+const httpServer = http.createServer(app);
+httpServer.listen(process.env.PORT || 3000, () => {
+  console.log("HTTP Server started on port", process.env.PORT || 3000);
+});
+
+io.on("connection", (socket) => {
+  console.log("New WebSocket connection:", socket.id);
+  socket.on("user events", (data) => {
+    console.log("Received user events:", data);
+    io.emit("update", { message: "New data available", data });
+  });
+
+  socket.on("disconnect", () => {
+    console.log("WebSocket disconnected:", socket.id);
+  });
+});
+
+wsServer.listen(process.env.WS_PORT || 4000, () => {
+  console.log("WebSocket Server started on port", process.env.WS_PORT || 4000);
 });
