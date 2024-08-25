@@ -59,8 +59,30 @@ export const uploadVideoOnCloudinary = (filePath) => {
         } else {
           resolve({
             url: result.secure_url,
-          }) // Ensure you're returning the correct URL property
+          }); // Ensure you're returning the correct URL property
           fs.unlinkSync(filePath);
+        }
+      }
+    );
+  });
+};
+
+export const uploadVideoOnCloudinaryBase64 = (base64String) => {
+  return new Promise((resolve, reject) => {
+    cloudinary.v2.uploader.upload(
+      `data:video/mp4;base64,${base64String}`,
+      {
+        resource_type: "video",
+        chunk_size: 100000000,
+      },
+      (error, result) => {
+        if (error) {
+          console.error("Cloudinary upload error:", error);
+          reject(error);
+        } else {
+          resolve({
+            url: result.secure_url,
+          }); // Ensure you're returning the correct URL property
         }
       }
     );

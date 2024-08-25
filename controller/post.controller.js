@@ -5,6 +5,7 @@ import {
   uploadBase64Image,
   uploadVideoOnCloudinary,
   uploadOnCloudinary,
+  uploadVideoOnCloudinaryBase64,
 } from "../utils/cloudinary.util.js";
 
 const getPosts = async (req, res) => {
@@ -57,7 +58,7 @@ const getPost = async (req, res) => {
 };
 
 const createPost = async (req, res) => {
-  const { content, imageUrlBase64 } = req.body;
+  const { content, imageUrlBase64, videoUrlBase64 } = req.body;
   const createdBy = req.user ? req.user._id : null;
 
   if (!createdBy) {
@@ -95,6 +96,11 @@ const createPost = async (req, res) => {
         })
       );
       imageUrl = imageUrls;
+    }
+
+    if (videoUrlBase64) {
+      const videoResult = await uploadVideoOnCloudinaryBase64(videoUrlBase64);
+      videoUrl = videoResult.url;
     }
 
     // Upload video if it is provided
