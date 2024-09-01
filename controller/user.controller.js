@@ -902,6 +902,51 @@ const isFollowing = async (req, res) => {
   }
 };
 
+const removeFollower = async (req, res) => {
+  const userId = req.params.id;
+  const followerId = req.user._id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const follower = await User.findById(followerId);
+
+    if (!follower) {
+      return res.status(404).json({ message: "Follower not found" });
+    }
+
+    //remove the follower
+
+    user.followers.pull(followerId);
+    user.followersCount -= 1;
+
+    await user.save();
+
+    follower.following.pull(userId);
+    follower.followingCount -= 1;
+
+    await follower.save();
+
+    return res.status(200).json({
+      message: "Follower removed successfully",
+      follower: {
+        id: follower._id,
+        name: follower.name,
+        username: follower.username,
+        profileImage: follower.profileImage,
+      },
+    });
+
+  } catch (error) {
+    console.error("Error removing follower:", error);
+    return res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getUsers,
   createUser,
@@ -925,4 +970,5 @@ export {
   getUsersBookmarkedCourses,
   requestOTP,
   verifyOTP,
+  removeFollower
 };

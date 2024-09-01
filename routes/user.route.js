@@ -23,6 +23,7 @@ import {
   getUsersBookmarkedCourses,
   requestOTP,
   verifyOTP,
+  removeFollower
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -121,5 +122,9 @@ router.put(
     editProfile(req, res);
   }
 );
+
+router.delete("/remove-follower/:id", auth, (req, res) => {
+  removeFollower(req, res);
+});
 
 export default router;
