@@ -49,20 +49,40 @@ const createComment = async (req, res) => {
 
 const getComments = async (req, res) => {
   const { id } = req.params;
+  const { page = 1, limit = 10 } = req.query; // Default page is 1, limit is 10
 
   try {
-    const post = await Post.findById(id).populate("comments");
+    const post = await Post.findById(id).populate({
+      path: 'comments',
+      options: {
+        skip: (page - 1) * limit,
+        limit: parseInt(limit),
+      }
+    });
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    res.status(200).json({ comments: post.comments });
+    const totalComments = post.comments.length;
+    const totalPages = Math.ceil(totalComments / limit);
+
+    res.status(200).json({
+      comments: post.comments,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: totalPages,
+        totalComments: totalComments,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1
+      }
+    });
   } catch (error) {
     console.error("Error getting comments:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 const updateComment = async (req, res) => {
   const { content } = req.body;

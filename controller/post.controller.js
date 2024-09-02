@@ -11,17 +11,29 @@ import {
 const getPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-
+  const userId = req.user._id;
   try {
-    const posts = await Post.find()
-      .populate("createdBy", "name username email profileImage") // Ensure 'username', 'email', and 'profileImage' are valid fields in User schema
-      .populate("comments", "content")
-      .sort({ createdAt: -1 }) // Sort by createdAt in descending order
+    const posts = await Post.find({ createdBy: userId })
+      .populate("createdBy", "name username email profileImage")
+      .populate({
+        path: "comments",
+        options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
+        populate: [
+          {
+            path: "createdBy",
+            select: "name username profileImage",
+          },
+          {
+            path: "content",
+            select: "content",
+          },
+        ],
+      })
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
-    const totalPosts = await Post.countDocuments();
+    const totalPosts = await Post.countDocuments({ createdBy: userId });
 
     res.status(200).json({
       message: "Posts retrieved successfully",

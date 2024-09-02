@@ -10,6 +10,7 @@ import {
   uploadOnCloudinary,
   uploadBase64Image,
 } from "../utils/cloudinary.util.js";
+import path from "path";
 
 /**
  * Retrieves all users from the database.
@@ -93,7 +94,7 @@ const getUserPosts = async (req, res) => {
     }
 
     const posts = await Post.find({ createdBy: userId })
-      .populate("createdBy", "name username email profileImage")
+      .populate("createdBy", "name username profileImage")
       .populate({
         path: "comments",
         options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
@@ -229,16 +230,25 @@ const getMyProfile = async (req, res) => {
           },
         ],
       })
-      .populate("followers", "name username profileImage")
-      .populate("following", "name username profileImage")
       .populate({
         path: "posts",
         options: { sort: { createdAt: -1 } }, // Sort posts by creation date in descending order
-        populate: {
-          path: "createdBy",
-          select: "name username profileImage",
-        },
-      });
+        populate: [
+          {
+            path: "createdBy",
+            select: "name username profileImage",
+          },
+          {
+            path: "comments",
+            populate: {
+              path: "createdBy",
+              select: "name username profileImage", // Populate comment creator's details
+            },
+          },
+        ],
+      })
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage");
 
     if (!user) {
       return res.status(404).json({
@@ -315,7 +325,7 @@ const getOtherUserProfile = async (req, res) => {
     // Find the user by ID and populate the relevant fields
     const user = await User.findById(req.params.id)
       .select("-password")
-      .populate("followers", "name username profileImage")
+      .select("-password")
       .populate({
         path: "courses",
         populate: [
@@ -329,8 +339,6 @@ const getOtherUserProfile = async (req, res) => {
           },
         ],
       })
-      .populate("followers", "name username profileImage")
-      .populate("following", "name username profileImage")
       .populate({
         path: "enrolledCourses",
         populate: [
@@ -347,11 +355,22 @@ const getOtherUserProfile = async (req, res) => {
       .populate({
         path: "posts",
         options: { sort: { createdAt: -1 } }, // Sort posts by creation date in descending order
-        populate: {
-          path: "createdBy",
-          select: "name username profileImage",
-        },
-      });
+        populate: [
+          {
+            path: "createdBy",
+            select: "name username profileImage",
+          },
+          {
+            path: "comments",
+            populate: {
+              path: "createdBy",
+              select: "name username profileImage", // Populate comment creator's details
+            },
+          },
+        ],
+      })
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage");
 
     if (!user) {
       return res.status(404).json({
@@ -940,7 +959,6 @@ const removeFollower = async (req, res) => {
         profileImage: follower.profileImage,
       },
     });
-
   } catch (error) {
     console.error("Error removing follower:", error);
     return res.status(500).json({ message: error.message });
@@ -970,5 +988,5 @@ export {
   getUsersBookmarkedCourses,
   requestOTP,
   verifyOTP,
-  removeFollower
+  removeFollower,
 };
