@@ -11,9 +11,10 @@ import {
 const getPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-  const userId = req.user._id;
+
   try {
-    const posts = await Post.find({ createdBy: userId })
+    const posts = await Post.find()
+      .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
       .populate("createdBy", "name username email profileImage")
       .populate({
         path: "comments",
@@ -33,7 +34,7 @@ const getPosts = async (req, res) => {
       .limit(pageSize)
       .exec();
 
-    const totalPosts = await Post.countDocuments({ createdBy: userId });
+    const totalPosts = await Post.countDocuments();
 
     res.status(200).json({
       message: "Posts retrieved successfully",

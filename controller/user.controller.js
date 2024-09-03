@@ -10,7 +10,6 @@ import {
   uploadOnCloudinary,
   uploadBase64Image,
 } from "../utils/cloudinary.util.js";
-import path from "path";
 
 /**
  * Retrieves all users from the database.
@@ -77,52 +76,6 @@ const searchUsers = async (req, res) => {
     });
   } catch (error) {
     console.error("Error retrieving users:", error);
-    res.status(500).json({ message: error.message });
-  }
-};
-
-const getUserPosts = async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const pageSize = parseInt(req.query.pageSize) || 10;
-
-  try {
-    const userId = req.user._id;
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const posts = await Post.find({ createdBy: userId })
-      .populate("createdBy", "name username profileImage")
-      .populate({
-        path: "comments",
-        options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
-        populate: [
-          {
-            path: "createdBy",
-            select: "name username profileImage",
-          },
-          {
-            path: "content",
-            select: "content",
-          },
-        ],
-      })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .exec();
-
-    const totalPosts = await Post.countDocuments({ createdBy: userId });
-
-    res.status(200).json({
-      message: "Posts retrieved successfully",
-      posts,
-      totalPages: Math.ceil(totalPosts / pageSize),
-      currentPage: page,
-    });
-  } catch (error) {
-    console.error("Error retrieving posts:", error);
     res.status(500).json({ message: error.message });
   }
 };
@@ -230,32 +183,21 @@ const getMyProfile = async (req, res) => {
           },
         ],
       })
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage")
       .populate({
         path: "posts",
         options: { sort: { createdAt: -1 } }, // Sort posts by creation date in descending order
-        populate: [
-          {
-            path: "createdBy",
-            select: "name username profileImage",
-          },
-          {
-            path: "comments",
-            populate: {
-              path: "createdBy",
-              select: "name username profileImage", // Populate comment creator's details
-            },
-          },
-        ],
-      })
-      .populate("followers", "name username profileImage")
-      .populate("following", "name username profileImage");
-
+        populate: {
+          path: "createdBy",
+          select: "name username profileImage",
+        },
+      });
     if (!user) {
       return res.status(404).json({
         message: "User not found",
       });
     }
-
     return res.status(200).json({
       message: "User profile retrieved successfully!",
       user: user,
@@ -976,7 +918,6 @@ export {
   logoutUser,
   getMyProfile,
   refreshToken,
-  getUserPosts,
   followUser,
   getFollowers,
   getFollowings,

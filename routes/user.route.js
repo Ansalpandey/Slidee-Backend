@@ -11,7 +11,6 @@ import {
   logoutUser,
   getMyProfile,
   refreshToken,
-  getUserPosts,
   isFollowing,
   followUser,
   getFollowers,
@@ -88,10 +87,6 @@ router.get("/profile/:id", auth, (req, res) => {
 
 router.get("/refresh-token", (req, res) => {
   refreshToken(req, res);
-});
-
-router.get("/posts", auth, (req, res) => {
-  getUserPosts(req, res);
 });
 
 router.post("/follow/:id", auth, (req, res) => {
