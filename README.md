@@ -74,12 +74,6 @@ The server will start running on `http://localhost:3000`.
 | PUT    | /api/lessons/:id        | Update a specific lesson                   |
 | DELETE | /api/lessons/:id        | Delete a specific lesson                   |
 | POST   | /api/enroll             | Enroll a user in a course                  |
-| GET    | /api/progress           | Get a user's progress in a course          |
-| POST   | /api/forums             | Create a new forum post                    |
-| GET    | /api/forums             | Get all forum posts                        |
-| GET    | /api/forums/:id         | Get a specific forum post                  |
-| PUT    | /api/forums/:id         | Update a specific forum post               |
-| DELETE | /api/forums/:id         | Delete a specific forum post               |
 
 ## Contributing
 
