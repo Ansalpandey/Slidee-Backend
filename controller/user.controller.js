@@ -154,59 +154,42 @@ const getUsersBookmarkedCourses = async (req, res) => {
 
 const getMyProfile = async (req, res) => {
   try {
-    // Find the user by ID and populate the relevant fields
+    // Find the user by ID and exclude posts and password
     const user = await User.findById(req.user._id)
-      .select("-password")
+      .select("-password -posts") // Exclude posts from the profile response
       .populate({
         path: "courses",
         populate: [
-          {
-            path: "madeBy",
-            select: "name username",
-          },
-          {
-            path: "enrolledBy",
-            select: "name username",
-          },
+          { path: "madeBy", select: "name username" },
+          { path: "enrolledBy", select: "name username" },
         ],
       })
       .populate({
         path: "enrolledCourses",
         populate: [
-          {
-            path: "madeBy",
-            select: "name username",
-          },
-          {
-            path: "enrolledBy",
-            select: "name username",
-          },
+          { path: "madeBy", select: "name username" },
+          { path: "enrolledBy", select: "name username" },
         ],
       })
       .populate("followers", "name username profileImage")
-      .populate("following", "name username profileImage")
-      .populate({
-        path: "posts",
-        options: { sort: { createdAt: -1 } }, // Sort posts by creation date in descending order
-        populate: {
-          path: "createdBy",
-          select: "name username profileImage",
-        },
-      });
+      .populate("following", "name username profileImage");
+
     if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
+      return res.status(404).json({ message: "User not found" });
     }
+
+    // Count the number of posts for the user
+    const postCount = await Post.countDocuments({ createdBy: req.user._id });
+
+    // Return user data with post count
     return res.status(200).json({
       message: "User profile retrieved successfully!",
       user: user,
+      postCount: postCount, // Include post count
     });
   } catch (error) {
     console.error("Error retrieving user profile:", error);
-    return res.status(500).json({
-      message: "Server error",
-    });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -266,8 +249,7 @@ const getOtherUserProfile = async (req, res) => {
   try {
     // Find the user by ID and populate the relevant fields
     const user = await User.findById(req.params.id)
-      .select("-password")
-      .select("-password")
+      .select("-password -posts") // Exclude password and posts
       .populate({
         path: "courses",
         populate: [
@@ -319,10 +301,14 @@ const getOtherUserProfile = async (req, res) => {
         message: "User not found",
       });
     }
+    // Count the number of posts for the user
+    const postCount = await Post.countDocuments({ createdBy: req.params.id });
 
+    // Return user data with post count
     return res.status(200).json({
       message: "User profile retrieved successfully!",
       user: user,
+      postCount: postCount, // Include post count
     });
   } catch (error) {
     console.error("Error retrieving user profile:", error);

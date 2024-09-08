@@ -364,6 +364,49 @@ const getPostLikes = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+const getPostsByUserId = async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const pageSize = parseInt(req.query.pageSize) || 10;
+
+  try {
+    // Fetch the posts created by the specific user
+    const posts = await Post.find({ createdBy: req.params.id })
+      .sort({ createdAt: -1 }) // Sort by latest posts
+      .populate("createdBy", "name username email profileImage")
+      .populate({
+        path: "comments",
+        options: { sort: { createdAt: -1 } }, // Sort comments by latest
+        populate: {
+          path: "createdBy",
+          select: "name username profileImage",
+        },
+      })
+      .skip((page - 1) * pageSize) // Pagination logic
+      .limit(pageSize)
+      .exec();
+
+    // Count total posts by the specific user
+    const totalPosts = await Post.countDocuments({ createdBy: req.params.id });
+
+    // If no posts are found
+    if (!posts.length) {
+      return res.status(404).json({
+        message: "No posts found for this user",
+      });
+    }
+
+    // Send response with posts, total pages, and current page
+    res.status(200).json({
+      message: "Posts retrieved successfully",
+      posts,
+      totalPages: Math.ceil(totalPosts / pageSize), // Calculate total pages
+      currentPage: page,
+    });
+  } catch (error) {
+    console.error("Error retrieving posts:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 export {
   getPosts,
@@ -375,4 +418,5 @@ export {
   unlikePost,
   getPostLikes,
   bookmarkedPost,
+  getPostsByUserId,
 };
