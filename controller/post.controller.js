@@ -7,32 +7,43 @@ import {
   uploadOnCloudinary,
   uploadVideoOnCloudinaryBase64,
 } from "../utils/cloudinary.util.js";
+import NodeCache from "node-cache";
 
+const cache = new NodeCache({
+  stdTTL: 600, // 10 minutes cache expiry
+  checkperiod: 120, // Check for expired keys every 2 minutes
+});
 const getPosts = async (req, res) => {
+  let posts;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
-    const posts = await Post.find()
-      .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
-      .populate("createdBy", "name username email profileImage")
-      .populate({
-        path: "comments",
-        options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
-        populate: [
-          {
-            path: "createdBy",
-            select: "name username profileImage",
-          },
-          {
-            path: "content",
-            select: "content",
-          },
-        ],
-      })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
-      .exec();
+    if (cache.has("posts")) {
+      posts = JSON.parse(cache.get("posts"));
+    } else {
+      posts = await Post.find()
+        .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
+        .populate("createdBy", "name username email profileImage")
+        .populate({
+          path: "comments",
+          options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
+          populate: [
+            {
+              path: "createdBy",
+              select: "name username profileImage",
+            },
+            {
+              path: "content",
+              select: "content",
+            },
+          ],
+        })
+        .skip((page - 1) * pageSize)
+        .limit(pageSize)
+        .exec();
+      cache.set("posts", JSON.stringify(posts));
+    }
 
     const totalPosts = await Post.countDocuments();
 
@@ -145,6 +156,9 @@ const createPost = async (req, res) => {
       { new: true }
     );
 
+    // Clear the cache
+    cache.del("posts");
+
     res.status(201).json({
       message: "Post created successfully",
       post: savedPost,
@@ -227,6 +241,9 @@ const updatePost = async (req, res) => {
 
     await post.save();
 
+    // Clear the cache
+    cache.del("posts");
+
     res.status(200).json({
       message: "Post updated successfully",
       post,
@@ -257,6 +274,9 @@ const deletePost = async (req, res) => {
     }
 
     await post.remove();
+
+    // Clear the cache
+    cache.del("posts");
 
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
