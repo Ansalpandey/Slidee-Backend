@@ -5,6 +5,7 @@ import bodyParser from "body-parser";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./db/db.js";
+import morgan from "morgan";
 // Start WebSocket server on a different port
 const wsServer = http.createServer();
 const io = new Server(wsServer);
@@ -17,10 +18,7 @@ app.use(bodyParser.urlencoded({ limit: "5gb", extended: true }));
 app.use(bodyParser.json({ limit: "5gb" }));
 app.use(cookieParser());
 
-app.use((req, res, next) => {
-  console.log("HTTP request - ", req.method + " , " + req.url);
-  next();
-});
+app.use(morgan("dev"));
 
 // Database connection
 connectDB(io);

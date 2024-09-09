@@ -10,7 +10,12 @@ import {
   uploadOnCloudinary,
   uploadBase64Image,
 } from "../utils/cloudinary.util.js";
+import NodeCache from "node-cache";
 
+const cache = new NodeCache({
+  stdTTL: 600, // 10 minutes cache expiry
+  checkperiod: 120, // Check for expired keys every 2 minutes
+});
 /**
  * Retrieves all users from the database.
  *
@@ -153,26 +158,32 @@ const getUsersBookmarkedCourses = async (req, res) => {
  */
 
 const getMyProfile = async (req, res) => {
+  let user;
   try {
     // Find the user by ID and exclude posts and password
-    const user = await User.findById(req.user._id)
-      .select("-password -posts") // Exclude posts from the profile response
-      .populate({
-        path: "courses",
-        populate: [
-          { path: "madeBy", select: "name username" },
-          { path: "enrolledBy", select: "name username" },
-        ],
-      })
-      .populate({
-        path: "enrolledCourses",
-        populate: [
-          { path: "madeBy", select: "name username" },
-          { path: "enrolledBy", select: "name username" },
-        ],
-      })
-      .populate("followers", "name username profileImage")
-      .populate("following", "name username profileImage");
+    if (cache.has("user")) {
+      user = JSON.parse(cache.get("user"));
+    } else {
+      user = await User.findById(req.user._id)
+        .select("-password -posts") // Exclude posts from the profile response
+        .populate({
+          path: "courses",
+          populate: [
+            { path: "madeBy", select: "name username" },
+            { path: "enrolledBy", select: "name username" },
+          ],
+        })
+        .populate({
+          path: "enrolledCourses",
+          populate: [
+            { path: "madeBy", select: "name username" },
+            { path: "enrolledBy", select: "name username" },
+          ],
+        })
+        .populate("followers", "name username profileImage")
+        .populate("following", "name username profileImage");
+      cache.set("user", JSON.stringify(user));
+    }
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -232,7 +243,7 @@ const editProfile = async (req, res) => {
 
     // Save the updated user profile
     await user.save();
-
+    cache.del("user");
     return res.status(200).json({
       message: "Profile updated successfully",
       user,
@@ -449,45 +460,6 @@ const loginUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send("Server error");
-  }
-};
-
-/**
- * Updates a user by their ID.
- *
- * @param {Object} req - The request object.
- * @param {Object} res - The response object.
- * @returns {Object} The updated user object or an error message.
- */
-const updateUser = (req, res) => {
-  const userId = req.params.id;
-  const updateData = req.body;
-
-  // Ensure the userId is a valid ObjectId
-  if (mongoose.Types.ObjectId.isValid(userId)) {
-    User.findByIdAndUpdate(userId, updateData, { new: true })
-      .then((result) => {
-        if (result) {
-          return res.status(200).json({
-            message: "User updated successfully!",
-            user: result,
-          });
-        } else {
-          return res.status(404).json({
-            message: "User not found!",
-          });
-        }
-      })
-      .catch((err) => {
-        return res.status(500).json({
-          message: "Error updating user",
-          error: err,
-        });
-      });
-  } else {
-    return res.status(400).json({
-      message: "Invalid user ID",
-    });
   }
 };
 
@@ -897,7 +869,6 @@ export {
   getUsers,
   createUser,
   loginUser,
-  updateUser,
   forgetPassword,
   deleteUser,
   getUserCourses,

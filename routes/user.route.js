@@ -4,7 +4,6 @@ import {
   getUsers,
   createUser,
   loginUser,
-  updateUser,
   forgetPassword,
   deleteUser,
   getUserCourses,
@@ -39,10 +38,6 @@ router
 
 router.post("/login", (req, res) => {
   loginUser(req, res);
-});
-
-router.put("/:id", auth, (req, res) => {
-  updateUser(req, res);
 });
 
 router.delete("/:id", auth, (req, res) => {
