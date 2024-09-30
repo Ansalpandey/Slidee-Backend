@@ -1,21 +1,45 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-import bodyParser from "body-parser";
+
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./db/db.js";
 import morgan from "morgan";
-// Start WebSocket server on a different port
 const wsServer = http.createServer();
 const io = new Server(wsServer);
 dotenv.config();
+import {startConsumer} from "./utils/kafkapostconsumer.js";
+import { collectDefaultMetrics, Histogram, register } from 'prom-client';
+import responseTime from "response-time";
 
 const app = express();
+collectDefaultMetrics({
+  register: register
+});
+app.get("/metrics", async (req, res) => {
+  res.setHeader('Content-Type', register.contentType);
+  const matrics = await register.metrics();
+  res.send(matrics);
+});
+
+const reqResTime = new Histogram({
+  name: 'http_request_duration_seconds',
+  help: 'Duration of HTTP requests in seconds',
+  labelNames: ['method', 'route', 'code'],
+  buckets: [100, 500, 1000, 5000]
+});
+app.use(responseTime((req, res, time) => {
+  const path = req.route ? req.route.path : 'unknown';
+  reqResTime
+    .labels(req.method, path, res.statusCode)
+    .observe(time);
+}));
+
 
 // Middlewares
-app.use(bodyParser.urlencoded({ limit: "5gb", extended: true }));
-app.use(bodyParser.json({ limit: "5gb" }));
+app.use(express.json({ limit: '50mb' }));  // Increase limit to 50MB or more
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 app.use(morgan("dev"));
@@ -37,24 +61,15 @@ app.use("/api/v1/lessons/", lessonRouter);
 app.use("/api/v1/posts/", postRouter);
 app.use("/api/v1/posts/", commentRouter);
 
-// Start HTTP server
-const httpServer = http.createServer(app);
-httpServer.listen(process.env.PORT || 3000, () => {
-  console.log("HTTP Server started on port", process.env.PORT || 3000);
-});
+// Start the server and Kafka consumer
+app.listen(process.env.PORT, async () => {
+  console.log(`Server running on port ${process.env.PORT}`);
 
-io.on("connection", (socket) => {
-  console.log("New WebSocket connection:", socket.id);
-  socket.on("user events", (data) => {
-    console.log("Received user events:", data);
-    io.emit("update", { message: "New data available", data });
-  });
-
-  socket.on("disconnect", () => {
-    console.log("WebSocket disconnected:", socket.id);
-  });
-});
-
-wsServer.listen(process.env.WS_PORT || 4000, () => {
-  console.log("WebSocket Server started on port", process.env.WS_PORT || 4000);
+  // Start the Kafka consumer when the server starts
+  try {
+    await startConsumer();
+    console.log("Kafka consumer started successfully");
+  } catch (error) {
+    console.error("Error starting Kafka consumer:", error);
+  }
 });

@@ -1,21 +1,30 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import  EventEmitter from "node-cache";
 dotenv.config();
+
 /**
  * Connects to the MongoDB database.
  * @returns {Promise<void>} A promise that resolves when the connection is successful or rejects with an error.
  */
 const connectDB = async (io) => {
   try {
+    mongoose.set('bufferCommands', false); // Disable Mongoose buffering
+
+    // Establish MongoDB connection
     await mongoose.connect(
-      process.env.MONGO_URL,
-      // process.env.MONGO_URL_LOCAL,
+      process.env.MONGO_URL_LOCAL, // Use your MongoDB URL
+      // process.env.MONGO_URL,
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
+        connectTimeoutMS: 30000, // Increase timeout
       }
     );
+    
     console.log("MongoDB connected successfully!");
+    EventEmitter.setMaxListeners(100000);
+
     // Array of collection names to watch
     const collectionsToWatch = [
       "users",

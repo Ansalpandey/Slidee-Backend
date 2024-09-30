@@ -1,7 +1,6 @@
 import { User } from "../models/user.model.js";
 import { Course } from "../models/course.model.js";
 import { Post } from "../models/post.model.js";
-import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
@@ -13,8 +12,8 @@ import {
 import NodeCache from "node-cache";
 
 const cache = new NodeCache({
-  stdTTL: 600, // 10 minutes cache expiry
-  checkperiod: 120, // Check for expired keys every 2 minutes
+  stdTTL: 120, // 2 minutes cache expiry
+  checkperiod: 60, // Check for expired keys every 1 minute
 });
 /**
  * Retrieves all users from the database.

@@ -27,11 +27,13 @@ export const uploadOnCloudinary = async (localFilePath) => {
   }
 };
 
-// Function to upload image from a base64 string
 export const uploadBase64Image = async (base64String) => {
   try {
+    // Remove any metadata before uploading
+    const cleanBase64 = base64String.replace(/^data:image\/\w+;base64,/, "");
+    
     const response = await cloudinary.v2.uploader.upload(
-      `data:image/jpeg;base64,${base64String}`,
+      `data:image/jpeg;base64,${cleanBase64}`,
       {
         resource_type: "image",
       }
@@ -42,6 +44,7 @@ export const uploadBase64Image = async (base64String) => {
     return null;
   }
 };
+
 
 export const uploadVideoOnCloudinary = (filePath) => {
   return new Promise((resolve, reject) => {
@@ -69,8 +72,11 @@ export const uploadVideoOnCloudinary = (filePath) => {
 
 export const uploadVideoOnCloudinaryBase64 = (base64String) => {
   return new Promise((resolve, reject) => {
+    // Remove any metadata before uploading
+    const cleanBase64 = base64String.replace(/^data:video\/\w+;base64,/, "");
+    
     cloudinary.v2.uploader.upload(
-      `data:video/mp4;base64,${base64String}`,
+      `data:video/mp4;base64,${cleanBase64}`,
       {
         resource_type: "video",
         chunk_size: 100000000,
@@ -82,7 +88,7 @@ export const uploadVideoOnCloudinaryBase64 = (base64String) => {
         } else {
           resolve({
             url: result.secure_url,
-          }); // Ensure you're returning the correct URL property
+          }); 
         }
       }
     );

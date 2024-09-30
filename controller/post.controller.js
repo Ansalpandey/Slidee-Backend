@@ -7,43 +7,37 @@ import {
   uploadOnCloudinary,
   uploadVideoOnCloudinaryBase64,
 } from "../utils/cloudinary.util.js";
-import NodeCache from "node-cache";
-
-const cache = new NodeCache({
-  stdTTL: 600, // 10 minutes cache expiry
-  checkperiod: 120, // Check for expired keys every 2 minutes
+import { Kafka } from "kafkajs";
+const kafka = new Kafka({
+  clientId: "slidee-app",
+  brokers: ["192.168.1.7:9092"],
 });
+const producer = kafka.producer();
+const admin = kafka.admin();
 const getPosts = async (req, res) => {
-  let posts;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
-
   try {
-    if (cache.has("posts")) {
-      posts = JSON.parse(cache.get("posts"));
-    } else {
-      posts = await Post.find()
-        .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
-        .populate("createdBy", "name username email profileImage")
-        .populate({
-          path: "comments",
-          options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
-          populate: [
-            {
-              path: "createdBy",
-              select: "name username profileImage",
-            },
-            {
-              path: "content",
-              select: "content",
-            },
-          ],
-        })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .exec();
-      cache.set("posts", JSON.stringify(posts));
-    }
+    const posts = await Post.find()
+      .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
+      .populate("createdBy", "name username email profileImage")
+      .populate({
+        path: "comments",
+        options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
+        populate: [
+          {
+            path: "createdBy",
+            select: "name username profileImage",
+          },
+          {
+            path: "content",
+            select: "content",
+          },
+        ],
+      })
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .exec();
 
     const totalPosts = await Post.countDocuments();
 
@@ -80,7 +74,22 @@ const getPost = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
+const createTopicIfNotExists = async (topic) => {
+  try {
+    await admin.connect();
+    const topics = await admin.listTopics();
+    if (!topics.includes(topic)) {
+      await admin.createTopics({
+        topics: [{ topic, numPartitions: 1, replicationFactor: 1 }],
+      });
+      console.log(`Topic "${topic}" created`);
+    }
+  } catch (error) {
+    console.error("Error creating topic:", error);
+  } finally {
+    await admin.disconnect();
+  }
+};
 const createPost = async (req, res) => {
   const { content, imageUrlBase64, videoUrlBase64 } = req.body;
   const createdBy = req.user ? req.user._id : null;
@@ -156,13 +165,31 @@ const createPost = async (req, res) => {
       { new: true }
     );
 
-    // Clear the cache
-    cache.del("posts");
+    // Ensure the topic exists
+    await createTopicIfNotExists("create-posts");
+
+    // Connect and send message to Kafka
+    await producer.connect();
+    await producer.send({
+      topic: "create-posts",
+      messages: [
+        {
+          value: JSON.stringify({
+            content,
+            imageUrl,
+            videoUrl,
+            createdBy,
+          }),
+        },
+      ],
+    });
+    await producer.disconnect();
 
     res.status(201).json({
-      message: "Post created successfully",
+      message: "Post creation request sent successfully",
       post: savedPost,
     });
+
   } catch (error) {
     console.error("Error in createPost function:", error);
     res.status(409).json({ message: error.message });
@@ -241,9 +268,6 @@ const updatePost = async (req, res) => {
 
     await post.save();
 
-    // Clear the cache
-    cache.del("posts");
-
     res.status(200).json({
       message: "Post updated successfully",
       post,
@@ -274,9 +298,6 @@ const deletePost = async (req, res) => {
     }
 
     await post.remove();
-
-    // Clear the cache
-    cache.del("posts");
 
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {

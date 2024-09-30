@@ -2,8 +2,8 @@ import http from 'k6/http';
 import { sleep } from 'k6';
 
 export const options = {
-  vus: 500,
-  duration: '5m',
+  vus: 10000,
+  duration: '10m',
   cloud: {
     // Project: slidee-backend
     projectID: 3713148,
@@ -22,21 +22,15 @@ export const options = {
 };
 
 export default function() {
-  // http.get('http://localhost:3000/api/v1/posts');
-  // http.get('http://localhost:3000/api/v1/users/profile', {
+  // http.post('http://localhost:8000/api/v1/posts/create', JSON.stringify({
+  //   content: 'afdsafsdafsdafsdafsdafdsafsdafsdafsdafdsaf',
+  //   videoUrl: '',
+  //   imageUrl: '',
+  // }),{
   //   headers: {
-  //     'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjZiMDU3M2E1YzljMTNlNDkxYmRhMmZlIiwiZW1haWwiOiJwYW5kZXlhbnNhbDc3QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYW5zYWxwYW5kZXkifSwiaWF0IjoxNzI1ODAzNTU1LCJleHAiOjE3MjcwOTk1NTV9.9lOH4uvRy8iyn9ch74p7fbw0DLzFNhgX0TCKb1jcCbc"
+  //     'Content-Type': 'application/json',
+  //     'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjZmYWFiNWRmNzU1ZWFhYzNiOTUxN2NhIiwiZW1haWwiOiJwYW5kZXlhbnNhbDc3QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYW5zYWxfcGFuZGV5In0sImlhdCI6MTcyNzcwNDE2MSwiZXhwIjoxNzI5MDAwMTYxfQ.EBDRNmCtCn1RTKUVEXpnuSWs_cSTP-FL7srK20vxxv0"
   //   },
   // });
-  http.post('http://localhost:3000/api/v1/posts/create', JSON.stringify({
-    content: 'Test',
-    videoUrl: '',
-    imageUrl: '',
-  }),{
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjZiMDU3M2E1YzljMTNlNDkxYmRhMmZlIiwiZW1haWwiOiJwYW5kZXlhbnNhbDc3QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYW5zYWxwYW5kZXkifSwiaWF0IjoxNzI1ODAzNTU1LCJleHAiOjE3MjcwOTk1NTV9.9lOH4uvRy8iyn9ch74p7fbw0DLzFNhgX0TCKb1jcCbc"
-    },
-  });
   sleep(1);
 }
