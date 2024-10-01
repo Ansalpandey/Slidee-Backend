@@ -7,13 +7,13 @@ import {
   uploadOnCloudinary,
   uploadVideoOnCloudinaryBase64,
 } from "../utils/cloudinary.util.js";
-import { Kafka } from "kafkajs";
-const kafka = new Kafka({
-  clientId: "slidee-app",
-  brokers: ["192.168.1.7:9092"],
-});
-const producer = kafka.producer();
-const admin = kafka.admin();
+import {
+  startProducer,
+  createTopicIfNotExists,
+  produceMessage,
+  disconnectProducer,
+} from "../kafka/kafka.producer.js";
+
 const getPosts = async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
@@ -74,22 +74,7 @@ const getPost = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-const createTopicIfNotExists = async (topic) => {
-  try {
-    await admin.connect();
-    const topics = await admin.listTopics();
-    if (!topics.includes(topic)) {
-      await admin.createTopics({
-        topics: [{ topic, numPartitions: 1, replicationFactor: 1 }],
-      });
-      console.log(`Topic "${topic}" created`);
-    }
-  } catch (error) {
-    console.error("Error creating topic:", error);
-  } finally {
-    await admin.disconnect();
-  }
-};
+
 const createPost = async (req, res) => {
   const { content, imageUrlBase64, videoUrlBase64 } = req.body;
   const createdBy = req.user ? req.user._id : null;
@@ -107,7 +92,7 @@ const createPost = async (req, res) => {
       ? imageUrlBase64
       : [imageUrlBase64];
 
-    // Upload the postImage if it is provided
+    // Upload the post images if provided (either base64 or from the file)
     if (imageUrlBase64) {
       const imageUrls = await Promise.all(
         imageBase64Array.map(async (base64) => {
@@ -136,7 +121,7 @@ const createPost = async (req, res) => {
       videoUrl = videoResult.url;
     }
 
-    // Upload video if it is provided
+    // Upload video if it is provided (from file)
     if (req.files && req.files.videoUrl && req.files.videoUrl.length > 0) {
       const videoFiles = req.files.videoUrl;
       const video = videoFiles[0];
@@ -148,48 +133,29 @@ const createPost = async (req, res) => {
       }
     }
 
-    const post = new Post({
+    // Start the Kafka producer and send the post creation event
+    await startProducer();
+
+    // Check if the topic exists, and create it if not
+    const topic = "create-posts";
+    await createTopicIfNotExists(topic);
+
+    // Produce a message with post creation details
+    const message = JSON.stringify({
       content,
       imageUrl,
       videoUrl,
-      createdBy: new mongoose.Types.ObjectId(createdBy),
-    });
-
-    // Save the post to the database
-    const savedPost = await post.save();
-
-    // Update the user's posts array
-    await User.findByIdAndUpdate(
       createdBy,
-      { $push: { posts: savedPost._id } },
-      { new: true }
-    );
-
-    // Ensure the topic exists
-    await createTopicIfNotExists("create-posts");
-
-    // Connect and send message to Kafka
-    await producer.connect();
-    await producer.send({
-      topic: "create-posts",
-      messages: [
-        {
-          value: JSON.stringify({
-            content,
-            imageUrl,
-            videoUrl,
-            createdBy,
-          }),
-        },
-      ],
     });
-    await producer.disconnect();
+
+    await produceMessage(topic, message);
+
+    // Optionally, disconnect the producer after producing the message
+    await disconnectProducer();
 
     res.status(201).json({
-      message: "Post creation request sent successfully",
-      post: savedPost,
+      message: "Post creation request sent successfully to Kafka",
     });
-
   } catch (error) {
     console.error("Error in createPost function:", error);
     res.status(409).json({ message: error.message });
@@ -449,6 +415,41 @@ const getPostsByUserId = async (req, res) => {
   }
 };
 
+const deleteAllPostsOfUser = async (req, res) => {
+  const userId = req.user ? req.user._id : null;
+
+  if (!userId) {
+    return res.status(401).json({ message: "User not authenticated" });
+  }
+
+  try {
+    // Delete all posts created by the user
+    await Post.deleteMany({ createdBy: userId });
+
+    // Reset the user's posts array and posts count
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          posts: [],
+          postsCount: 0,
+        },
+      },
+      { new: true } // Returns the updated document
+    );
+
+    res
+      .status(200)
+      .json({
+        message:
+          "All posts deleted successfully, user's posts and post count reset.",
+      });
+  } catch (error) {
+    console.error("Error deleting posts:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 export {
   getPosts,
   getPost,
@@ -460,4 +461,5 @@ export {
   getPostLikes,
   bookmarkedPost,
   getPostsByUserId,
+  deleteAllPostsOfUser,
 };

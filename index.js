@@ -9,7 +9,7 @@ import morgan from "morgan";
 const wsServer = http.createServer();
 const io = new Server(wsServer);
 dotenv.config();
-import {startConsumer} from "./utils/kafkapostconsumer.js";
+import {startConsumer} from "./kafka/kafka.consumer.js";
 import { collectDefaultMetrics, Histogram, register } from 'prom-client';
 import responseTime from "response-time";
 
@@ -35,7 +35,6 @@ app.use(responseTime((req, res, time) => {
     .labels(req.method, path, res.statusCode)
     .observe(time);
 }));
-
 
 // Middlewares
 app.use(express.json({ limit: '50mb' }));  // Increase limit to 50MB or more

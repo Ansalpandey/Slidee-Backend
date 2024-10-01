@@ -12,6 +12,7 @@ import {
   getPostLikes,
   bookmarkedPost,
   getPostsByUserId,
+  deleteAllPostsOfUser
 } from "../controller/post.controller.js";
 
 import { auth } from "../middleware/auth.middleware.js";
@@ -64,6 +65,10 @@ router.post("/:id/bookmark", (req, res) => {
 
 router.get("/users/:id", (req, res) => {
   getPostsByUserId(req, res);
+});
+
+router.delete("/:id/deleteAll", (req, res) => {
+  deleteAllPostsOfUser(req, res);
 });
 
 export default router;

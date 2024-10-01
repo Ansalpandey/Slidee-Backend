@@ -2,7 +2,7 @@ import http from 'k6/http';
 import { sleep } from 'k6';
 
 export const options = {
-  vus: 10000,
+  vus: 5000,
   duration: '10m',
   cloud: {
     // Project: slidee-backend
@@ -22,15 +22,15 @@ export const options = {
 };
 
 export default function() {
-  // http.post('http://localhost:8000/api/v1/posts/create', JSON.stringify({
-  //   content: 'afdsafsdafsdafsdafsdafdsafsdafsdafsdafdsaf',
-  //   videoUrl: '',
-  //   imageUrl: '',
-  // }),{
-  //   headers: {
-  //     'Content-Type': 'application/json',
-  //     'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjZmYWFiNWRmNzU1ZWFhYzNiOTUxN2NhIiwiZW1haWwiOiJwYW5kZXlhbnNhbDc3QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYW5zYWxfcGFuZGV5In0sImlhdCI6MTcyNzcwNDE2MSwiZXhwIjoxNzI5MDAwMTYxfQ.EBDRNmCtCn1RTKUVEXpnuSWs_cSTP-FL7srK20vxxv0"
-  //   },
-  // });
+  http.post('http://localhost:8000/api/v1/posts/create', JSON.stringify({
+    content: 'afdsafsdafsdafsdafsdafdsafsdafsdafsdafdsaf',
+    videoUrl: '',
+    imageUrl: '',
+  }),{
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjZmYjc0MzBhMWZjM2FiY2FmNjVmZDUxIiwiZW1haWwiOiJwYW5kZXlhbnNhbDc3QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYW5zYWxwYW5kZXkifSwiaWF0IjoxNzI3NzU1MzI3LCJleHAiOjE3MjkwNTEzMjd9.HWOys1z9lyiXBqmzzVxCVMUOgsIXJoUGZNt7n101v2Y"
+    },
+  });
   sleep(1);
 }
