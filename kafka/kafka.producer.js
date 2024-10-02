@@ -38,19 +38,6 @@ export const startProducer = async () => {
   }
 };
 
-// Create Topic
-export const createTopic = async (topic) => {
-  try {
-    await producer.createTopics({
-      topics: [{ topic }],
-    });
-    console.log(`Topic "${topic}" created successfully`);
-  } catch (error) {
-    console.error('Error creating topic:', error);
-    throw error;
-  }
-};
-
 // Produce Message
 export const produceMessage = async (topic, message) => {
   try {

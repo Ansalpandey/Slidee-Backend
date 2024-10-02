@@ -58,7 +58,7 @@ app.use("/api/v1/users/", userRouter);
 app.use("/api/v1/courses/", courseRouter);
 app.use("/api/v1/lessons/", lessonRouter);
 app.use("/api/v1/posts/", postRouter);
-app.use("/api/v1/posts/", commentRouter);
+app.use("/api/v1/comments/", commentRouter);
 
 // Start the server and Kafka consumer
 app.listen(process.env.PORT, async () => {

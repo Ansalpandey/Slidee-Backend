@@ -272,8 +272,11 @@ const deletePost = async (req, res) => {
   }
 };
 
+const TOPIC_NAME = 'like-dislike-events';
+
+// Like a post
 const likePost = async (req, res) => {
-  const { id } = req.params;
+  const { id: postId } = req.params;
   const userId = req.user ? req.user._id : null;
 
   if (!userId) {
@@ -281,73 +284,62 @@ const likePost = async (req, res) => {
   }
 
   try {
-    const post = await Post.findById(id);
 
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
+    await startProducer();
 
-    if (post.likedBy.includes(userId)) {
-      return res.status(400).json({ message: "Post already liked" });
-    }
+    // Ensure the topic exists
+    await createTopicIfNotExists(TOPIC_NAME);
 
-    post.likes += 1;
-    post.likedBy.push(userId);
+    // Produce a like event
+    const message = JSON.stringify({
+      postId,
+      userId,
+      action: 'like',
+      timestamp: new Date().toISOString(),
+    });
+    await produceMessage(TOPIC_NAME, message);
 
-    await post.save();
+    await disconnectProducer();
 
-    res.status(200).json({ message: "Post liked successfully" });
+    res.status(200).json({ message: "Like event produced successfully" });
   } catch (error) {
-    console.error("Error liking post:", error);
+    console.error("Error producing like event:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
+// Dislike (unlike) a post
 const unlikePost = async (req, res) => {
-  const { id } = req.params;
+  const { id: postId } = req.params;
   const userId = req.user ? req.user._id : null;
 
   if (!userId) {
     return res.status(401).json({ message: "User not authenticated" });
   }
 
-  let attempts = 0;
-  const maxAttempts = 3;
+  try {
 
-  while (attempts < maxAttempts) {
-    try {
-      const post = await Post.findById(id);
+    await startProducer();
 
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
+    // Ensure the topic exists
+    await createTopicIfNotExists(TOPIC_NAME);
 
-      if (!post.likedBy.includes(userId)) {
-        return res.status(400).json({ message: "Post not liked yet" });
-      }
+    // Produce a dislike event
+    const message = JSON.stringify({
+      postId,
+      userId,
+      action: 'dislike',
+      timestamp: new Date().toISOString(),
+    });
+    await produceMessage(TOPIC_NAME, message);
 
-      post.likes -= 1;
-      post.likedBy = post.likedBy.filter(
-        (likedId) => likedId.toString() !== userId.toString()
-      );
-
-      await post.save();
-      return res.status(200).json({ message: "Post unliked successfully" });
-    } catch (error) {
-      if (error instanceof mongoose.Error.VersionError) {
-        attempts += 1;
-        console.log(`Version conflict detected. Retry attempt ${attempts}`);
-        continue;
-      }
-      console.error("Error unliking post:", error);
-      return res.status(500).json({ message: error.message });
-    }
+    await disconnectProducer();
+    
+    res.status(200).json({ message: "Dislike event produced successfully" });
+  } catch (error) {
+    console.error("Error producing dislike event:", error);
+    res.status(500).json({ message: error.message });
   }
-
-  return res.status(500).json({
-    message:
-      "Failed to unlike post after multiple attempts due to version conflicts.",
-  });
 };
 
 const getPostLikes = async (req, res) => {
