@@ -15,7 +15,9 @@ const auth = (req, res, next) => {
     if (token) {
       token = token.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = { _id: decoded.user.id }; // Ensure _id matches the expected property in the token payload
+      req.user = { _id: decoded.user.id
+        , username: decoded.user.username
+       }; // Ensure _id matches the expected property in the token payload
     } else {
       return res.status(401).json({ message: "Unauthorized" });
     }

@@ -11,7 +11,7 @@ const kafka = new Kafka({
 });
 
 const consumer = kafka.consumer({ groupId: "slidee-group" });
-const url = process.env.MONGO_URL_LOCAL;
+const url = process.env.MONGO_URL;
 
 let postBatch = [];
 let userPostIdsBatch = [];

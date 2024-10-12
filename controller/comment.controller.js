@@ -39,7 +39,6 @@ const createComment = async (req, res) => {
 
     res.status(201).json({
       message: "Comment created successfully",
-      comment,
     });
   } catch (error) {
     console.error("Error creating comment:", error);
@@ -49,33 +48,49 @@ const createComment = async (req, res) => {
 
 const getComments = async (req, res) => {
   const { id } = req.params;
-  const { page = 1, limit = 10 } = req.query; // Default page is 1, limit is 10
+  const page = parseInt(req.query.page) || 1; // Default page is 1
+  const pageSize = parseInt(req.query.pageSize) || 10; // Default pageSize is 10
 
   try {
     const post = await Post.findById(id).populate({
-      path: 'comments',
+      path: "comments",
       options: {
-        skip: (page - 1) * limit,
-        limit: parseInt(limit),
-      }
+        skip: (page - 1) * pageSize, // Use pageSize for skipping comments
+        limit: pageSize, // Use pageSize for limiting comments
+        sort: { createdAt: -1 }, // Sort comments by creation date in descending order
+      },
+      populate: [
+        {
+          path: "createdBy",
+          select: "name username profileImage",
+        },
+        {
+          path: "content",
+          select: "content",
+        },
+      ],
     });
 
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    const totalComments = post.comments.length;
-    const totalPages = Math.ceil(totalComments / limit);
+    // Count total comments
+    const totalComments = await Post.aggregate([
+      { $match: { _id: post._id } },
+      { $unwind: "$comments" },
+      { $count: "total" },
+    ]);
+
+    const totalCount = totalComments.length > 0 ? totalComments[0].total : 0; // Total count of comments
+    const totalPages = Math.ceil(totalCount / pageSize); // Calculate total pages
 
     res.status(200).json({
+      message: "Comments retrieved successfully",
       comments: post.comments,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: totalPages,
-        totalComments: totalComments,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1
-      }
+      totalComments: totalCount,
+      totalPages,
+      currentPage: page,
     });
   } catch (error) {
     console.error("Error getting comments:", error);

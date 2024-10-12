@@ -1,6 +1,7 @@
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
-import mongoose from "mongoose";
+import Notification from "../models/notification.model.js";
+import { io, connectedUsers } from "../index.js";
 import {
   uploadBase64Image,
   uploadVideoOnCloudinary,
@@ -21,6 +22,7 @@ const getPosts = async (req, res) => {
     const posts = await Post.find()
       .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
       .populate("createdBy", "name username email profileImage")
+      .populate("likedBy", "name username profileImage bio")
       .populate({
         path: "comments",
         options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
@@ -272,7 +274,7 @@ const deletePost = async (req, res) => {
   }
 };
 
-const TOPIC_NAME = 'like-dislike-events';
+const TOPIC_NAME = "like-dislike-events";
 
 // Like a post
 const likePost = async (req, res) => {
@@ -284,29 +286,59 @@ const likePost = async (req, res) => {
   }
 
   try {
+    // Find the post and its owner
+    const post = await Post.findById(postId).populate('createdBy', '_id username name profileImage');
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
 
+    const postOwner = post.createdBy;
+
+    // Start the Kafka producer (assuming Kafka setup)
     await startProducer();
-
-    // Ensure the topic exists
     await createTopicIfNotExists(TOPIC_NAME);
 
     // Produce a like event
     const message = JSON.stringify({
       postId,
       userId,
-      action: 'like',
+      action: "like",
       timestamp: new Date().toISOString(),
     });
     await produceMessage(TOPIC_NAME, message);
 
+    // Create a notification with the populated user data
+    const notificationMessage = "liked your post";
+    const notification = new Notification({
+      user: postOwner._id, // Post owner ID
+      type: "like_post", 
+      message: notificationMessage,
+      link: `/posts/${postId}`,
+    });
+    await notification.save();
+
+    // Populate the notification user field before sending it
+    const populatedNotification = await Notification.findById(notification._id)
+      .populate('user', '_id username name profileImage');
+
+    // Send the notification via WebSocket if the post owner is online
+    const socketId = connectedUsers[postOwner._id];
+    if (socketId) {
+      io.to(socketId).emit("new_notification", populatedNotification);
+    }
+
     await disconnectProducer();
 
-    res.status(200).json({ message: "Like event produced successfully" });
+    res.status(200).json({
+      message: "Like event produced and notification sent successfully",
+    });
+
   } catch (error) {
     console.error("Error producing like event:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // Dislike (unlike) a post
 const unlikePost = async (req, res) => {
@@ -318,7 +350,6 @@ const unlikePost = async (req, res) => {
   }
 
   try {
-
     await startProducer();
 
     // Ensure the topic exists
@@ -328,13 +359,13 @@ const unlikePost = async (req, res) => {
     const message = JSON.stringify({
       postId,
       userId,
-      action: 'dislike',
+      action: "dislike",
       timestamp: new Date().toISOString(),
     });
     await produceMessage(TOPIC_NAME, message);
 
     await disconnectProducer();
-    
+
     res.status(200).json({ message: "Dislike event produced successfully" });
   } catch (error) {
     console.error("Error producing dislike event:", error);
@@ -368,19 +399,25 @@ const getPostsByUserId = async (req, res) => {
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
-    // Fetch the posts created by the specific user
-    const posts = await Post.find({ createdBy: req.params.id })
-      .sort({ createdAt: -1 }) // Sort by latest posts
+    const posts = await Post.find()
+      .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
       .populate("createdBy", "name username email profileImage")
+      .populate("likedBy", "name username profileImage bio")
       .populate({
         path: "comments",
-        options: { sort: { createdAt: -1 } }, // Sort comments by latest
-        populate: {
-          path: "createdBy",
-          select: "name username profileImage",
-        },
+        options: { sort: { createdAt: -1 } }, // Sort comments by creation date in descending order
+        populate: [
+          {
+            path: "createdBy",
+            select: "name username profileImage",
+          },
+          {
+            path: "content",
+            select: "content",
+          },
+        ],
       })
-      .skip((page - 1) * pageSize) // Pagination logic
+      .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
 
@@ -430,12 +467,10 @@ const deleteAllPostsOfUser = async (req, res) => {
       { new: true } // Returns the updated document
     );
 
-    res
-      .status(200)
-      .json({
-        message:
-          "All posts deleted successfully, user's posts and post count reset.",
-      });
+    res.status(200).json({
+      message:
+        "All posts deleted successfully, user's posts and post count reset.",
+    });
   } catch (error) {
     console.error("Error deleting posts:", error);
     res.status(500).json({ message: error.message });

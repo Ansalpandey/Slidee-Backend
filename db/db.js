@@ -13,8 +13,8 @@ const connectDB = async (io) => {
 
     // Establish MongoDB connection
     await mongoose.connect(
-      process.env.MONGO_URL_LOCAL, // Use your MongoDB URL
-      // process.env.MONGO_URL,
+      // process.env.MONGO_URL_LOCAL, // Use your MongoDB URL
+      process.env.MONGO_URL,
       {
         useNewUrlParser: true,
         useUnifiedTopology: true,
