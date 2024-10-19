@@ -82,6 +82,10 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
+    deviceToken: {
+      type: String,
+    },
+
     age: {
       type: Number,
       required: true,

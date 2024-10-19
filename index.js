@@ -8,6 +8,7 @@ import { connectDB } from "./db/db.js";
 import morgan from "morgan";
 dotenv.config();
 import { startConsumer } from "./kafka/kafka.consumer.js";
+import { startProducer } from "./kafka/kafka.producer.js";
 import { collectDefaultMetrics, Histogram, register } from "prom-client";
 import responseTime from "response-time";
 // WebSocket Server
@@ -69,6 +70,8 @@ httpServer.listen(process.env.HTTP_PORT, async () => {
   console.log(`HTTP Server running on port ${process.env.HTTP_PORT}`);
   // Start the Kafka consumer when the server starts
   try {
+    await startProducer();
+    console.log("Kafka producer started successfully");
     await startConsumer();
     console.log("Kafka consumer started successfully");
   } catch (error) {

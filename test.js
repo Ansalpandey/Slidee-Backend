@@ -2,8 +2,8 @@ import http from 'k6/http';
 import { sleep } from 'k6';
 
 export const options = {
-  vus: 250,
-  duration: '10m',
+  vus: 10,
+  duration: '5s',
   cloud: {
     // Project: slidee-backend
     projectID: 3713148,

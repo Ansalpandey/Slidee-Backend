@@ -63,6 +63,10 @@ export const startConsumer = async () => {
             case "like-dislike-events":
               await handleLikeDislike(parsedMessage);
               break;
+
+              case "notification":
+                console.log("Notification received:", parsedMessage);
+                break;
             default:
               console.log(`Unhandled topic: ${topic}`);
           }

@@ -21,7 +21,9 @@ import {
   getUsersBookmarkedCourses,
   requestOTP,
   verifyOTP,
-  removeFollower
+  removeFollower,
+  getDeviceToken,
+  sendDeviceToken
 } from "../controller/user.controller.js";
 import { auth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/multer.middleware.js";
@@ -115,6 +117,14 @@ router.put(
 
 router.delete("/remove-follower/:id", auth, (req, res) => {
   removeFollower(req, res);
+});
+
+router.post("/device-token", auth, (req, res) => {
+  sendDeviceToken(req, res);
+});
+
+router.get("/device-token", auth, (req, res) => {
+  getDeviceToken(req, res);
 });
 
 export default router;

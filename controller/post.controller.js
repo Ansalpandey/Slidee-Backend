@@ -1,7 +1,7 @@
 import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import Notification from "../models/notification.model.js";
-import { io, connectedUsers } from "../index.js";
+import { sendLikeNotification } from "../services/firebase-admin.js";
 import {
   uploadBase64Image,
   uploadVideoOnCloudinary,
@@ -9,10 +9,8 @@ import {
   uploadVideoOnCloudinaryBase64,
 } from "../utils/cloudinary.util.js";
 import {
-  startProducer,
   createTopicIfNotExists,
   produceMessage,
-  disconnectProducer,
 } from "../kafka/kafka.producer.js";
 
 const getPosts = async (req, res) => {
@@ -134,10 +132,6 @@ const createPost = async (req, res) => {
         return res.status(500).json({ message: "Failed to upload video" });
       }
     }
-
-    // Start the Kafka producer and send the post creation event
-    await startProducer();
-
     // Check if the topic exists, and create it if not
     const topic = "create-posts";
     await createTopicIfNotExists(topic);
@@ -151,9 +145,6 @@ const createPost = async (req, res) => {
     });
 
     await produceMessage(topic, message);
-
-    // Optionally, disconnect the producer after producing the message
-    await disconnectProducer();
 
     res.status(201).json({
       message: "Post creation request sent successfully to Kafka",
@@ -285,17 +276,23 @@ const likePost = async (req, res) => {
     return res.status(401).json({ message: "User not authenticated" });
   }
 
+  // Find the post and its owner
+  const post = await Post.findById(postId);
+  if (!post) {
+    return res.status(404).json({ message: "Post not found" });
+  }
+  const postOwner = await User.findById(post.createdBy);
+
+  const likedByUser = await User.findById(userId).select(
+    "_id name username profileImage bio"
+  );
+
+  if (!postOwner || !postOwner.deviceToken) {
+    return res.status(404).json({ message: "Post owner or device token not found" });
+  }
+
   try {
-    // Find the post and its owner
-    const post = await Post.findById(postId).populate('createdBy', '_id username name profileImage');
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    const postOwner = post.createdBy;
-
-    // Start the Kafka producer (assuming Kafka setup)
-    await startProducer();
+    // Ensure the topic exists
     await createTopicIfNotExists(TOPIC_NAME);
 
     // Produce a like event
@@ -307,38 +304,40 @@ const likePost = async (req, res) => {
     });
     await produceMessage(TOPIC_NAME, message);
 
-    // Create a notification with the populated user data
-    const notificationMessage = "liked your post";
-    const notification = new Notification({
-      user: postOwner._id, // Post owner ID
-      type: "like_post", 
-      message: notificationMessage,
+    // Produce a notification event for the post owner
+    const notificationMessage = JSON.stringify({
+      user: postOwner._id,
+      type: "like_post",
+      message: `${userId} liked your post`,
       link: `/posts/${postId}`,
     });
-    await notification.save();
+    await produceMessage("notifications", notificationMessage);
 
-    // Populate the notification user field before sending it
-    const populatedNotification = await Notification.findById(notification._id)
-      .populate('user', '_id username name profileImage');
-
-    // Send the notification via WebSocket if the post owner is online
-    const socketId = connectedUsers[postOwner._id];
-    if (socketId) {
-      io.to(socketId).emit("new_notification", populatedNotification);
-    }
-
-    await disconnectProducer();
-
-    res.status(200).json({
-      message: "Like event produced and notification sent successfully",
+    await Notification.create({
+      user: postOwner._id,
+      type: "like_post",
+      message: ` liked your post`,
+      link: `/posts/${postId}`,
+      details: {
+        post: {
+          id: postId,
+          title: post.content,
+          name: likedByUser.name,
+          username: likedByUser.username,
+          profileImage: likedByUser.profileImage,
+        },
+      },
     });
-
+    // Send a Firebase push notification
+    const postOwnerDeviceToken = postOwner.deviceToken;
+    console.log("Sending notification to:", postOwnerDeviceToken);
+    await sendLikeNotification(postOwnerDeviceToken, postId, likedByUser);
+    res.status(200).json({ message: "Like event produced successfully" });
   } catch (error) {
     console.error("Error producing like event:", error);
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // Dislike (unlike) a post
 const unlikePost = async (req, res) => {
@@ -350,8 +349,6 @@ const unlikePost = async (req, res) => {
   }
 
   try {
-    await startProducer();
-
     // Ensure the topic exists
     await createTopicIfNotExists(TOPIC_NAME);
 
@@ -363,8 +360,6 @@ const unlikePost = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
     await produceMessage(TOPIC_NAME, message);
-
-    await disconnectProducer();
 
     res.status(200).json({ message: "Dislike event produced successfully" });
   } catch (error) {
@@ -394,12 +389,15 @@ const getPostLikes = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 const getPostsByUserId = async (req, res) => {
+  const { id } = req.params;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 10;
 
   try {
     const posts = await Post.find()
+      .where({ createdBy: id }) // Find posts by the specific user
       .sort({ createdAt: -1 }) // Sort posts by creation date in descending order
       .populate("createdBy", "name username email profileImage")
       .populate("likedBy", "name username profileImage bio")
@@ -445,19 +443,19 @@ const getPostsByUserId = async (req, res) => {
 };
 
 const deleteAllPostsOfUser = async (req, res) => {
-  const userId = req.user ? req.user._id : null;
+  const { id } = req.params;
 
-  if (!userId) {
+  if (!id) {
     return res.status(401).json({ message: "User not authenticated" });
   }
 
   try {
     // Delete all posts created by the user
-    await Post.deleteMany({ createdBy: userId });
+    await Post.deleteMany({ createdBy: id });
 
     // Reset the user's posts array and posts count
     await User.findByIdAndUpdate(
-      userId,
+      id,
       {
         $set: {
           posts: [],

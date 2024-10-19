@@ -9,12 +9,6 @@ import {
   uploadOnCloudinary,
   uploadBase64Image,
 } from "../utils/cloudinary.util.js";
-import NodeCache from "node-cache";
-
-const cache = new NodeCache({
-  stdTTL: 120, // 2 minutes cache expiry
-  checkperiod: 60, // Check for expired keys every 1 minute
-});
 /**
  * Retrieves all users from the database.
  *
@@ -160,29 +154,24 @@ const getMyProfile = async (req, res) => {
   let user;
   try {
     // Find the user by ID and exclude posts and password
-    if (cache.has("user")) {
-      user = JSON.parse(cache.get("user"));
-    } else {
-      user = await User.findById(req.user._id)
-        .select("-password -posts") // Exclude posts from the profile response
-        .populate({
-          path: "courses",
-          populate: [
-            { path: "madeBy", select: "name username" },
-            { path: "enrolledBy", select: "name username" },
-          ],
-        })
-        .populate({
-          path: "enrolledCourses",
-          populate: [
-            { path: "madeBy", select: "name username" },
-            { path: "enrolledBy", select: "name username" },
-          ],
-        })
-        .populate("followers", "name username profileImage")
-        .populate("following", "name username profileImage");
-      cache.set("user", JSON.stringify(user));
-    }
+    user = await User.findById(req.user._id)
+      .select("-password -posts") // Exclude posts from the profile response
+      .populate({
+        path: "courses",
+        populate: [
+          { path: "madeBy", select: "name username" },
+          { path: "enrolledBy", select: "name username" },
+        ],
+      })
+      .populate({
+        path: "enrolledCourses",
+        populate: [
+          { path: "madeBy", select: "name username" },
+          { path: "enrolledBy", select: "name username" },
+        ],
+      })
+      .populate("followers", "name username profileImage")
+      .populate("following", "name username profileImage");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -242,7 +231,6 @@ const editProfile = async (req, res) => {
 
     // Save the updated user profile
     await user.save();
-    cache.del("user");
     return res.status(200).json({
       message: "Profile updated successfully",
       user,
@@ -423,7 +411,7 @@ const loginUser = async (req, res) => {
     }
 
     // Compare the password
-    const isMatch = bcrypt.compare(password, user.password);
+    const isMatch = await user.isPasswordCorrect(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid Credentials" });
     }
@@ -778,7 +766,7 @@ const getFollowings = async (req, res) => {
     }
 
     const following = await User.find({ _id: { $in: user.following } })
-      .select("name username profileImage")
+      .select("name username bio profileImage")
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
@@ -837,8 +825,6 @@ const removeFollower = async (req, res) => {
       return res.status(404).json({ message: "Follower not found" });
     }
 
-    //remove the follower
-
     user.followers.pull(followerId);
     user.followersCount -= 1;
 
@@ -864,6 +850,45 @@ const removeFollower = async (req, res) => {
   }
 };
 
+const sendDeviceToken = async (req, res) => {
+  const userId = req.user._id; // Authenticated user's ID
+  const { token } = req.body; // Token from request body
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Save the token in user's profile
+    user.deviceToken = token;
+    await user.save();
+
+    return res.status(200).json("Token saved successfully");
+  } catch (error) {
+    console.error("Error saving device token:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+const getDeviceToken = async (req, res) => {
+  const userId = req.user._id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json("User not found");
+    }
+
+    return res.status(200).json({ token: user.deviceToken });
+  } catch (error) {
+    console.error("Error retrieving device token:", error);
+    return res.status(500).json("Internal server error");
+  }
+};
+
 export {
   getUsers,
   createUser,
@@ -886,4 +911,6 @@ export {
   requestOTP,
   verifyOTP,
   removeFollower,
+  sendDeviceToken,
+  getDeviceToken
 };
