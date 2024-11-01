@@ -5,12 +5,24 @@ import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import { Kafka } from "kafkajs";
 
+// const kafka = new Kafka({
+//   clientId: "ccloud-nodejs-client-938f82d0-b0ae-4be4-aa33-ad00d5be14fc",
+//   brokers: ["pkc-7prvp.centralindia.azure.confluent.cloud:9092"],
+//   ssl: true,
+//   sasl: {
+//     mechanism: "PLAIN",
+//     username: "FKGTRYGKOLEC6XOS",
+//     password: "u14ZhBoIstIjgeQgRUlHSr6VdoRseo5NhnDH01UIOSeH/CUejd53MOIcNZya0o95",
+//   },
+// });
+
 const kafka = new Kafka({
   clientId: "slidee-app",
   brokers: ["192.168.1.7:9092"],
 });
 
-const consumer = kafka.consumer({ groupId: "slidee-group" });
+const consumer = kafka.consumer({
+  groupId: "slidee-group"});
 const url = process.env.MONGO_URL;
 
 let postBatch = [];
@@ -64,9 +76,9 @@ export const startConsumer = async () => {
               await handleLikeDislike(parsedMessage);
               break;
 
-              case "notification":
-                console.log("Notification received:", parsedMessage);
-                break;
+            case "notification":
+              console.log("Notification received:", parsedMessage);
+              break;
             default:
               console.log(`Unhandled topic: ${topic}`);
           }
@@ -173,8 +185,12 @@ const insertPostsInBatch = async () => {
 // Handle Like and Dislike Events and Batch Insert
 const handleLikeDislike = async ({ postId, userId, action }) => {
   try {
-    const isLiked = likeBatch.some((like) => like.postId === postId && like.userId === userId);
-    const isDisliked = dislikeBatch.some((dislike) => dislike.postId === postId && dislike.userId === userId);
+    const isLiked = likeBatch.some(
+      (like) => like.postId === postId && like.userId === userId
+    );
+    const isDisliked = dislikeBatch.some(
+      (dislike) => dislike.postId === postId && dislike.userId === userId
+    );
 
     if (action === "like" && !isLiked) {
       // Add the event to the like batch
@@ -205,7 +221,9 @@ const insertLikesDislikesInBatch = async () => {
   }
 
   try {
-    console.log(`Processing ${likeBatch.length} likes and ${dislikeBatch.length} dislikes...`);
+    console.log(
+      `Processing ${likeBatch.length} likes and ${dislikeBatch.length} dislikes...`
+    );
 
     // Process likes
     if (likeBatch.length > 0) {
@@ -256,6 +274,4 @@ const insertLikesDislikesInBatch = async () => {
   }
 };
 
-
 export default consumer;
-

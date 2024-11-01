@@ -288,7 +288,9 @@ const likePost = async (req, res) => {
   );
 
   if (!postOwner || !postOwner.deviceToken) {
-    return res.status(404).json({ message: "Post owner or device token not found" });
+    return res
+      .status(404)
+      .json({ message: "Post owner or device token not found" });
   }
 
   try {
@@ -330,7 +332,15 @@ const likePost = async (req, res) => {
     });
     // Send a Firebase push notification
     const postOwnerDeviceToken = postOwner.deviceToken;
-    console.log("Sending notification to:", postOwnerDeviceToken);
+
+    // Only send a Firebase push notification if the liker is not the post owner
+    if (likedByUser._id.toString() !== postOwner._id.toString()) {
+      const postOwnerDeviceToken = postOwner.deviceToken;
+      await sendLikeNotification(postOwnerDeviceToken, postId, likedByUser);
+    } else {
+      return
+    }
+
     await sendLikeNotification(postOwnerDeviceToken, postId, likedByUser);
     res.status(200).json({ message: "Like event produced successfully" });
   } catch (error) {

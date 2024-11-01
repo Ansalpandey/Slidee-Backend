@@ -4,7 +4,10 @@ const userSchema = new mongoose.Schema(
   {
     username: {
       type: String,
-      required: true,
+      required: function () {
+        // Require username only if not a Google user
+        return !this.googleId;
+      },
     },
     name: {
       type: String,
@@ -13,10 +16,19 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+      unique: true, // Ensure email is unique
     },
     password: {
       type: String,
-      required: true,
+      required: function () {
+        // Require password only if not a Google user
+        return !this.googleId;
+      },
+    },
+    googleId: {
+      type: String,
+      unique: true, // Ensure unique for Google users
+      sparse: true, // Only applicable for Google users
     },
     enrolledCourses: [
       {
@@ -42,12 +54,10 @@ const userSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-
     followersCount: {
       type: Number,
       default: 0,
     },
-
     followingCount: {
       type: Number,
       default: 0,
@@ -67,25 +77,21 @@ const userSchema = new mongoose.Schema(
         ref: "Course",
       },
     ],
-
     bookmarkedCourses: [
       {
         type: mongoose.Types.ObjectId,
         ref: "Course",
       },
     ],
-
     bookmarkedPosts: [
       {
         type: mongoose.Types.ObjectId,
         ref: "Post",
       },
     ],
-
     deviceToken: {
       type: String,
     },
-
     age: {
       type: Number,
       required: true,

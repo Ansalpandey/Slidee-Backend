@@ -31,10 +31,10 @@ router.get("/:id", (req, res) => {
 router.post(
   "/create",
   upload.fields([
-    { name: "videoUrl", maxCount: 1 },
     { name: "imageUrl", maxCount: 5 },
+    { name: "videoUrl", maxCount: 1 },
   ]),
-  (req, res) => {
+  async (req, res) => {
     createPost(req, res);
   }
 );

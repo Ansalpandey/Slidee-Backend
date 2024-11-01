@@ -9,8 +9,6 @@ import morgan from "morgan";
 dotenv.config();
 import { startConsumer } from "./kafka/kafka.consumer.js";
 import { startProducer } from "./kafka/kafka.producer.js";
-import { collectDefaultMetrics, Histogram, register } from "prom-client";
-import responseTime from "response-time";
 // WebSocket Server
 const wsServer = http.createServer();  // Separate server for WebSocket
 export const io = new Server(wsServer);
@@ -18,27 +16,6 @@ const app = express();
 const httpServer = http.createServer(app);  // HTTP server for the Express app
 
 app.use(cors());
-collectDefaultMetrics({
-  register: register,
-});
-app.get("/metrics", async (req, res) => {
-  res.setHeader("Content-Type", register.contentType);
-  const matrics = await register.metrics();
-  res.send(matrics);
-});
-
-const reqResTime = new Histogram({
-  name: "http_request_duration_seconds",
-  help: "Duration of HTTP requests in seconds",
-  labelNames: ["method", "route", "code"],
-  buckets: [100, 500, 1000, 5000],
-});
-app.use(
-  responseTime((req, res, time) => {
-    const path = req.route ? req.route.path : "unknown";
-    reqResTime.labels(req.method, path, res.statusCode).observe(time);
-  })
-);
 
 // Middlewares
 app.use(express.json({ limit: "50mb" }));
@@ -47,7 +24,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 // Database connection
-connectDB(io);
+await connectDB(io);
 
 // Routes
 import userRouter from "./routes/user.route.js";
