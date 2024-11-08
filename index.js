@@ -1,7 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
 import { connectDB } from "./db/db.js";
@@ -20,7 +19,6 @@ app.use(cors());
 // Middlewares
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cookieParser());
 app.use(morgan("dev"));
 
 // Database connection

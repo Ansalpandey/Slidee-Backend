@@ -2,25 +2,25 @@ import http from "k6/http";
 import { sleep } from "k6";
 
 export const options = {
-  vus: 30,
-  duration: "1m",
+  // vus: 3000,
+  // duration: "1m",
   cloud: {
     // Project: slidee-backend
     projectID: 3713148,
     // Test runs with the same name groups test runs together.
     name: "Test (08/09/2024-18:24:16)",
   },
-  // scenarios: {
-  //   contacts: {
-  //     executor: 'ramping-vus',
-  //     startVUs: 0,
-  //     stages: [
-  //       { duration: '10m', target: 3000},
-  //       { duration: '10m', target: 1000},
-  //     ],
-  //     gracefulRampDown: '0s',
-  //   },
-  // }
+  scenarios: {
+    contacts: {
+      executor: 'ramping-vus',
+      startVUs: 0,
+      stages: [
+        { duration: '10m', target: 3000},
+        { duration: '10m', target: 1000},
+      ],
+      gracefulRampDown: '0s',
+    },
+  }
   // thresholds: {
   //   http_req_failed: ['rate<0.01'], // http errors should be less than 1%
   //   http_req_duration: ['p(95)<200'], // 95% of requests should be below 200ms
@@ -29,7 +29,7 @@ export const options = {
 
 export default function () {
   http.post(
-    "http://localhost:8000/api/v1/posts/create",
+    "http://localhost:3000/api/v1/posts/create",
     JSON.stringify({
       content: "This is a test post",
       videoUrl: "",
@@ -39,7 +39,7 @@ export default function () {
       headers: {
         "Content-Type": "application/json",
         Authorization:
-          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcxYjYzMGM3M2Y5MmYwMzhhOTI5YTBkIiwiZW1haWwiOiJwYW5kZXlhbnNhbDc3QGdtYWlsLmNvbSIsInVzZXJuYW1lIjoiYW5zYWxwYW5kZXkifSwiaWF0IjoxNzI5ODQ5NzYxLCJleHAiOjE3MzExNDU3NjF9.d-JpMixNdEs1iJhoqpT-hZYd0hF8a2CMN_vjQk2BWSU",
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjcyNzg2NzZjZWM2YjQ0ZDJjYzI1YWFlIiwiZW1haWwiOiJzaGl2YW1wYW5kZXlAZ21haWwuY29tIiwidXNlcm5hbWUiOiJzaGl2YW0ifSwiaWF0IjoxNzMwNjQzNjQ0LCJleHAiOjE3MzE5Mzk2NDR9.7sXEO7BeQYc9nAlnlPcafOeHZ-b8kw3aWUkEtCUxrXk",
       },
     }
   );

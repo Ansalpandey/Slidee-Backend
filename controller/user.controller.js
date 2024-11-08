@@ -22,7 +22,7 @@ const getUsers = async (req, res) => {
 
   try {
     const users = await User.find()
-      .populate("courses")
+      .select("id name username profileImage bio") // Include only the specified fields
       .skip((page - 1) * pageSize)
       .limit(pageSize)
       .exec();
@@ -40,6 +40,7 @@ const getUsers = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 const searchUsers = async (req, res) => {
   const page = parseInt(req.query.page) || 1;

@@ -5,25 +5,15 @@ import { Post } from "../models/post.model.js";
 import { User } from "../models/user.model.js";
 import { Kafka } from "kafkajs";
 
-// const kafka = new Kafka({
-//   clientId: "ccloud-nodejs-client-938f82d0-b0ae-4be4-aa33-ad00d5be14fc",
-//   brokers: ["pkc-7prvp.centralindia.azure.confluent.cloud:9092"],
-//   ssl: true,
-//   sasl: {
-//     mechanism: "PLAIN",
-//     username: "FKGTRYGKOLEC6XOS",
-//     password: "u14ZhBoIstIjgeQgRUlHSr6VdoRseo5NhnDH01UIOSeH/CUejd53MOIcNZya0o95",
-//   },
-// });
-
 const kafka = new Kafka({
   clientId: "slidee-app",
-  brokers: ["192.168.1.7:9092"],
+  brokers: ["192.168.1.8:9092"],
 });
 
 const consumer = kafka.consumer({
-  groupId: "slidee-group"});
-const url = process.env.MONGO_URL;
+  groupId: "slidee-group",
+});
+const url = process.env.MONGO_URL_LOCAL;
 
 let postBatch = [];
 let userPostIdsBatch = [];
